@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração - Biblioteca Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: { 50: '#f4f7f4', 100: '#e3ebe3', 200: '#c7d7c7', 500: '#7a9e7e', 600: '#5c7f60', 800: '#384d3b' },
+                        cream: { 50: '#fdfbf7', 100: '#f7f3eb', 200: '#eee5d8' },
+                        warmgray: { 700: '#4a4846', 800: '#2d2b2a' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fdfbf7; color: #4a4846; }
+        .serif-font { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Portão de senha simples (proteção básica, não é segurança forte) -->
+    <div id="authGate" class="fixed inset-0 bg-warmgray-800 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+            <div class="w-12 h-12 bg-sage-100 text-sage-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <h1 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Área restrita</h1>
+            <p class="text-xs text-warmgray-700 mb-5">Digite a senha de administrador para continuar.</p>
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-3">
+                <input type="password" id="authPassword" required placeholder="Senha" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none text-center">
+                <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-sm font-medium py-2.5 rounded-lg transition">Entrar</button>
+            </form>
+            <p id="authError" class="hidden text-xs text-red-500 mt-3">Senha incorreta.</p>
+        </div>
+    </div>
+
+    <!-- Painel de Administração (só aparece após a senha correta) -->
+    <div id="adminPanel" class="hidden">
+        <header class="bg-cream-100 border-b border-cream-200 py-4 px-4 sm:px-6">
+            <div class="max-w-6xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-2 font-serif text-lg font-bold text-sage-800">
+                    <i data-lucide="shield" class="w-5 h-5 text-sage-600"></i>
+                    <span>Painel de Administração</span>
+                </div>
+                <a href="index.html" class="text-xs text-warmgray-700 hover:text-sage-600 flex items-center gap-1">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                    Voltar ao site
+                </a>
+            </div>
+        </header>
+
+        <!-- Abas -->
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 flex gap-2 text-xs sm:text-sm">
+            <button onclick="mudarAba('compras')" id="tabBtn-compras" class="tab-btn px-4 py-2 rounded-full font-medium bg-sage-500 text-white transition">Compras</button>
+            <button onclick="mudarAba('avaliacoes')" id="tabBtn-avaliacoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Avaliações</button>
+            <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
+        </nav>
+
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+
+            <!-- Aba: Compras -->
+            <section id="aba-compras" class="tab-content">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Compras realizadas</h2>
+                <div class="bg-white rounded-xl border border-cream-200 overflow-x-auto shadow-2xs">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-cream-100 text-warmgray-700">
+                            <tr>
+                                <th class="px-4 py-2.5 font-semibold">Cliente</th>
+                                <th class="px-4 py-2.5 font-semibold">E-mail</th>
+                                <th class="px-4 py-2.5 font-semibold">Item</th>
+                                <th class="px-4 py-2.5 font-semibold">Valor</th>
+                                <th class="px-4 py-2.5 font-semibold">Status</th>
+                                <th class="px-4 py-2.5 font-semibold">Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comprasTableBody">
+                            <tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">A carregar...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Aba: Avaliações -->
+            <section id="aba-avaliacoes" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Avaliações dos leitores</h2>
+                <div id="avaliacoesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p class="text-xs text-gray-400 col-span-2 text-center">A carregar...</p>
+                </div>
+            </section>
+
+            <!-- Aba: Livros -->
+            <section id="aba-livros" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Adicionar novo livro</h2>
+                <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md shadow-2xs mb-8">
+                    <form id="addBookForm" onsubmit="handleAddBook(event)" class="space-y-3">
+                        <input type="text" id="bookTitulo" required placeholder="Título do livro" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <input type="text" id="bookAutor" required placeholder="Autor" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <input type="text" id="bookGenero" placeholder="Género (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <input type="number" id="bookPreco" required step="0.01" min="0.01" placeholder="Preço do livro (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <div>
+                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
+                            <input type="file" id="bookCapa" accept="image/*" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                        </div>
+                        <button type="submit" id="addBookBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                            Adicionar Livro
+                        </button>
+                    </form>
+                </div>
+
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Livros cadastrados</h2>
+                <div id="livrosAdminList" class="space-y-4">
+                    <p class="text-xs text-gray-400 text-center">A carregar...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Cliente Supabase -->
+    <script src="supabase.js"></script>
+
+    <script>
+        lucide.createIcons();
+
+        // ---------- Senha de acesso ----------
+        // Troque esta senha por uma só sua antes de publicar.
+        const ADMIN_PASSWORD = "troque-esta-senha";
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const senha = document.getElementById('authPassword').value;
+            if (senha === ADMIN_PASSWORD) {
+                document.getElementById('authGate').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                carregarCompras();
+                carregarAvaliacoesAdmin();
+                carregarLivrosAdmin();
+            } else {
+                document.getElementById('authError').classList.remove('hidden');
+            }
+        }
+
+        // ---------- Abas ----------
+        function mudarAba(nome) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('aba-' + nome).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-sage-500', 'text-white');
+                btn.classList.add('bg-white', 'border', 'border-cream-200', 'text-warmgray-700');
+            });
+            const ativo = document.getElementById('tabBtn-' + nome);
+            ativo.classList.add('bg-sage-500', 'text-white');
+            ativo.classList.remove('bg-white', 'border', 'border-cream-200', 'text-warmgray-700');
+        }
+
+        function escapeHtml(text) {
+            return String(text ?? '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // ---------- Compras ----------
+        async function carregarCompras() {
+            const tbody = document.getElementById('comprasTableBody');
+            try {
+                const resp = await fetch('/api/compras');
+                const compras = await resp.json();
+
+                if (!compras || compras.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Nenhuma compra registada ainda</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = compras.map(c => `
+                    <tr class="border-t border-cream-100">
+                        <td class="px-4 py-2.5">${escapeHtml(c.nome)}</td>
+                        <td class="px-4 py-2.5">${escapeHtml(c.email)}</td>
+                        <td class="px-4 py-2.5">${escapeHtml(c.item)}</td>
+                        <td class="px-4 py-2.5">R$ ${Number(c.valor).toFixed(2)}</td>
+                        <td class="px-4 py-2.5"><span class="text-[10px] bg-sage-50 text-sage-600 px-2 py-0.5 rounded-full">${escapeHtml(c.status)}</span></td>
+                        <td class="px-4 py-2.5 text-gray-500">${new Date(c.criado_em).toLocaleDateString('pt-PT')}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-red-500">Erro ao carregar compras</td></tr>';
+            }
+        }
+
+        // ---------- Avaliações ----------
+        async function carregarAvaliacoesAdmin() {
+            const list = document.getElementById('avaliacoesList');
+            try {
+                const resp = await fetch('/api/avaliacoes');
+                const avaliacoes = await resp.json();
+
+                if (!avaliacoes || avaliacoes.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-400 col-span-2 text-center">Nenhuma avaliação ainda</p>';
+                    return;
+                }
+
+                list.innerHTML = avaliacoes.map(av => {
+                    const stars = '★'.repeat(av.nota) + '☆'.repeat(5 - av.nota);
+                    return `
+                        <div class="bg-white p-4 rounded-xl border border-cream-200 shadow-2xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-warmgray-800">${escapeHtml(av.nome)}</span>
+                                <span class="text-amber-400 text-xs">${stars}</span>
+                            </div>
+                            <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">Livro: ${escapeHtml(av.livro)}</div>
+                            <p class="text-xs text-warmgray-700 italic">"${escapeHtml(av.comentario || '')}"</p>
+                            <span class="block text-[10px] text-gray-400">${new Date(av.criado_em).toLocaleDateString('pt-PT')}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<p class="text-xs text-red-500 col-span-2 text-center">Erro ao carregar avaliações</p>';
+            }
+        }
+
+        // ---------- Livros: adicionar novo ----------
+        async function handleAddBook(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addBookBtn');
+            const titulo = document.getElementById('bookTitulo').value;
+            const autor = document.getElementById('bookAutor').value;
+            const genero = document.getElementById('bookGenero').value;
+            const preco = parseFloat(document.getElementById('bookPreco').value);
+            const capa = document.getElementById('bookCapa').files[0];
+
+            if (!capa) {
+                alert('Selecione uma imagem de capa');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const nomeCapa = `${Date.now()}-${capa.name}`;
+                const { error: uploadError } = await supabaseClient
+                    .storage
+                    .from('capas-livros')
+                    .upload(nomeCapa, capa);
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlCapaData } = supabaseClient
+                    .storage
+                    .from('capas-livros')
+                    .getPublicUrl(nomeCapa);
+
+                const { error: insertError } = await supabaseClient
+                    .from('livros')
+                    .insert([{ titulo, autor, genero, preco, capa_url: urlCapaData.publicUrl }]);
+
+                if (insertError) throw insertError;
+
+                document.getElementById('addBookForm').reset();
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao adicionar livro');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        // ---------- Livros: listar + adicionar partes ----------
+        async function carregarLivrosAdmin() {
+            const container = document.getElementById('livrosAdminList');
+            try {
+                const { data: livros, error } = await supabaseClient
+                    .from('livros')
+                    .select('*, partes_livro(*)')
+                    .order('criado_em', { ascending: false });
+
+                if (error) throw error;
+
+                if (!livros || livros.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 text-center">Nenhum livro cadastrado ainda</p>';
+                    return;
+                }
+
+                container.innerHTML = livros.map(livro => {
+                    const partes = (livro.partes_livro || []).slice().sort((a, b) => a.numero_parte - b.numero_parte);
+                    const proximaParte = partes.length > 0 ? Math.max(...partes.map(p => p.numero_parte)) + 1 : 1;
+
+                    return `
+                        <div class="bg-white rounded-xl border border-cream-200 p-4 shadow-2xs">
+                            <div class="flex items-center gap-3">
+                                <img src="${livro.capa_url || ''}" class="w-12 h-16 object-cover rounded bg-cream-100">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)}</p>
+                                    <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}</p>
+                                </div>
+                                <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
+                                    + Adicionar parte
+                                </button>
+                            </div>
+
+                            ${partes.length > 0 ? `
+                            <div class="mt-3 pt-3 border-t border-cream-100 space-y-1.5">
+                                ${partes.map(p => `
+                                    <div class="text-[11px] bg-cream-50 px-2.5 py-1.5 rounded-lg">
+                                        Parte ${p.numero_parte}${(p.capitulo_inicio && p.capitulo_fim) ? ` · cap. ${p.capitulo_inicio}-${p.capitulo_fim}` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>` : `<p class="mt-3 pt-3 border-t border-cream-100 text-[11px] text-gray-400">Nenhuma parte cadastrada ainda</p>`}
+
+                            <form id="parteForm-${livro.id}" onsubmit="handleAddParte(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" id="parteNumero-${livro.id}" required min="1" value="${proximaParte}" placeholder="Parte nº" class="text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="number" id="capInicio-${livro.id}" min="1" placeholder="Cap. início" class="text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="number" id="capFim-${livro.id}" min="1" placeholder="Cap. fim" class="text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                </div>
+                                <input type="file" id="parteArquivo-${livro.id}" accept=".pdf,.epub" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                <button type="submit" class="w-full bg-sage-600 hover:bg-sage-800 text-white text-xs font-medium py-2 rounded-lg transition">
+                                    Salvar parte
+                                </button>
+                            </form>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar livros</p>';
+            }
+        }
+
+        function toggleParteForm(livroId) {
+            document.getElementById(`parteForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function handleAddParte(e, livroId) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const numero_parte = parseInt(document.getElementById(`parteNumero-${livroId}`).value, 10);
+            const capitulo_inicio = document.getElementById(`capInicio-${livroId}`).value || null;
+            const capitulo_fim = document.getElementById(`capFim-${livroId}`).value || null;
+            const arquivo = document.getElementById(`parteArquivo-${livroId}`).files[0];
+
+            if (!arquivo) {
+                alert('Selecione o arquivo (PDF ou EPUB) dessa parte');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const nomeArquivo = `${Date.now()}-${arquivo.name}`;
+                const { error: uploadError } = await supabaseClient
+                    .storage
+                    .from('arquivos-livros')
+                    .upload(nomeArquivo, arquivo);
+
+                if (uploadError) throw uploadError;
+
+                // Guardamos só o CAMINHO do arquivo (o bucket é privado agora,
+                // o link de leitura é gerado na hora, pelo backend, só pra quem comprou)
+                const { error: insertError } = await supabaseClient
+                    .from('partes_livro')
+                    .insert([{
+                        livro_id: livroId,
+                        numero_parte,
+                        capitulo_inicio,
+                        capitulo_fim,
+                        arquivo_url: nomeArquivo
+                    }]);
+
+                if (insertError) throw insertError;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao adicionar parte');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+    </script>
+</body>
+</html>
