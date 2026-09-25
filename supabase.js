@@ -5,4 +5,4 @@
 const SUPABASE_URL = "https://ggjtnlotacjywacdgmoh.supabase.co";
 const SUPABASE_KEY = "COLE_AQUI_SUA_PUBLISHABLE_KEY_COMPLETA";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
