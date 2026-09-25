@@ -54,10 +54,10 @@
 <body class="min-h-screen flex flex-col justify-between selection:bg-sage-200">
 
     <header class="w-full bg-cream-100 border-b border-cream-200 text-xs sm:text-sm text-warmgray-700">
-        
+
         <!-- Barra de Acesso Principal -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
-            
+
             <!-- Pesquisa Central -->
             <div class="flex-1 max-w-md">
                 <div class="relative">
@@ -70,11 +70,20 @@
 
             <!-- Botões de Acesso / Contas -->
             <div class="flex items-center space-x-3">
-                <button onclick="openModal('loginModal')" class="text-xs font-medium text-warmgray-700 hover:text-sage-600 transition px-3 py-1.5 border border-cream-200 rounded-full bg-white">
+                <button onclick="openModal('cartModal')" class="relative text-xs font-medium text-warmgray-700 hover:text-sage-600 transition px-3 py-1.5 border border-cream-200 rounded-full bg-white flex items-center gap-1.5">
+                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                    <span>Carrinho</span>
+                    <span id="cartBadge" class="hidden absolute -top-1.5 -right-1.5 bg-sage-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                </button>
+                <span id="contaLogadaLabel" class="hidden text-xs font-medium text-sage-800"></span>
+                <button id="loginBtn" onclick="openModal('loginModal')" class="text-xs font-medium text-warmgray-700 hover:text-sage-600 transition px-3 py-1.5 border border-cream-200 rounded-full bg-white">
                     Iniciar Sessão
                 </button>
-                <button onclick="openModal('registerModal')" class="text-xs font-medium bg-sage-500 hover:bg-sage-600 text-white px-3.5 py-1.5 rounded-full transition shadow-xs">
+                <button id="registerBtn" onclick="openModal('registerModal')" class="text-xs font-medium bg-sage-500 hover:bg-sage-600 text-white px-3.5 py-1.5 rounded-full transition shadow-xs">
                     Registar
+                </button>
+                <button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs font-medium text-warmgray-700 hover:text-red-500 transition px-3 py-1.5 border border-cream-200 rounded-full bg-white">
+                    Sair
                 </button>
             </div>
         </div>
@@ -82,7 +91,7 @@
         <!-- Barra de Navegação Principal / Categorias -->
         <nav class="bg-sage-100/90 border-t border-b border-sage-200/60 shadow-xs">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs sm:text-sm">
-                
+
                 <div class="flex items-center space-x-6">
                     <!-- Logótipo da Marca -->
                     <a href="#" class="flex items-center gap-2 pr-4 border-r border-sage-200 font-serif text-lg font-bold text-sage-800">
@@ -96,7 +105,7 @@
                             <span>Categorias</span>
                             <i data-lucide="chevron-down" id="categoriesArrow" class="w-3.5 h-3.5 transition-transform duration-200"></i>
                         </button>
-                        
+
                         <!-- Lista Dropdown de Categorias -->
                         <div id="categoriesMenu" class="hidden absolute left-0 top-full mt-1 w-52 bg-white border border-cream-200 rounded-xl shadow-lg py-2 z-50">
                             <a href="#catalogo" onclick="filterCategory('Ficção & Romance')" class="flex items-center justify-between px-4 py-2 text-xs text-warmgray-700 hover:bg-sage-50 hover:text-sage-600 transition">
@@ -205,6 +214,22 @@
                 </button>
             </div>
         </div>
+
+        <!-- Adicionar livro específico ao carrinho -->
+        <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md mx-auto mt-6 shadow-2xs">
+            <h3 class="text-sm font-semibold text-warmgray-800 mb-4 flex items-center gap-2">
+                <i data-lucide="shopping-cart" class="w-4 h-4 text-sage-500"></i>
+                <span>Comprar um livro específico</span>
+            </h3>
+            <form id="addToCartForm" onsubmit="handleAddToCart(event)" class="space-y-3">
+                <input type="text" id="cartBookTitle" required placeholder="Título do livro" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                <input type="number" id="cartBookPrice" required step="0.01" min="0.01" placeholder="Valor (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-xs">
+                    <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                    <span>Adicionar ao Carrinho</span>
+                </button>
+            </form>
+        </div>
     </section>
 
     <section id="avaliacoes" class="py-12 bg-cream-100/60 border-y border-cream-200 my-8">
@@ -221,16 +246,11 @@
                     <i data-lucide="message-square-plus" class="w-4 h-4 text-sage-500"></i>
                     <span>Deixe a sua opinião sobre um livro</span>
                 </h3>
+                <p class="text-[11px] text-gray-400 mb-3">É necessário iniciar sessão para publicar uma avaliação.</p>
                 <form id="reviewForm" onsubmit="handleReviewSubmit(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-warmgray-700 mb-1">O Seu Nome</label>
-                            <input type="text" id="reviewerName" required placeholder="Ex: Lucas Gabriel" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Título do Livro</label>
-                            <input type="text" id="reviewBookTitle" required placeholder="Ex: Mensagem" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-medium text-warmgray-700 mb-1">Título do Livro</label>
+                        <input type="text" id="reviewBookTitle" required placeholder="Ex: Mensagem" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-warmgray-700 mb-1">A Sua Avaliação</label>
@@ -252,52 +272,9 @@
                 </form>
             </div>
 
-            <!-- Lista Dinâmica de Opiniões -->
+            <!-- Lista Dinâmica de Opiniões (carregada do banco de dados) -->
             <div id="reviewsList" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Card Opinião 1 -->
-                <div class="bg-white p-5 rounded-xl border border-cream-200 shadow-2xs space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-warmgray-800">Fernanda Souza</span>
-                        <span class="text-amber-400 text-xs">★★★★★</span>
-                    </div>
-                    <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">
-                        Livro: A Hora da Estrela
-                    </div>
-                    <p class="text-xs text-warmgray-700 leading-relaxed italic">
-                        "Visualmente limpo e fácil de navegar. Cores super agradáveis para ler sem cansar os olhos."
-                    </p>
-                    <span class="block text-[10px] text-gray-400">Enviado recentemente</span>
-                </div>
-
-                <!-- Card Opinião 2 -->
-                <div class="bg-white p-5 rounded-xl border border-cream-200 shadow-2xs space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-warmgray-800">Rafael Mendes</span>
-                        <span class="text-amber-400 text-xs">★★★★☆</span>
-                    </div>
-                    <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">
-                        Livro: O Alquimista
-                    </div>
-                    <p class="text-xs text-warmgray-700 leading-relaxed italic">
-                        "Muito bom encontrar uma biblioteca online tão leve e sem poluição visual. Recomendado!"
-                    </p>
-                    <span class="block text-[10px] text-gray-400">Enviado recentemente</span>
-                </div>
-
-                <!-- Card Opinião 3 -->
-                <div class="bg-white p-5 rounded-xl border border-cream-200 shadow-2xs space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-warmgray-800">Camila Martins</span>
-                        <span class="text-amber-400 text-xs">★★★★★</span>
-                    </div>
-                    <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">
-                        Livro: O Pequeno Príncipe
-                    </div>
-                    <p class="text-xs text-warmgray-700 leading-relaxed italic">
-                        "Gostei da facilidade para enviar avaliações e da organização simples das secções."
-                    </p>
-                    <span class="block text-[10px] text-gray-400">Enviado recentemente</span>
-                </div>
+                <p class="text-xs text-gray-400 col-span-3 text-center">A carregar avaliações...</p>
             </div>
         </div>
     </section>
@@ -311,7 +288,7 @@
                     <p class="text-xs sm:text-sm text-warmgray-700 leading-relaxed">
                         Caso ocorra qualquer inconsistência no funcionamento da biblioteca ou dúvidas sobre o registo e catálogo, entre em contacto direto através do canal abaixo.
                     </p>
-                    
+
                     <div class="pt-2 space-y-3">
                         <div class="flex items-center gap-3 text-xs sm:text-sm text-warmgray-800 bg-sage-50 p-3.5 rounded-xl border border-sage-200/60">
                             <div class="p-2.5 bg-sage-500 text-white rounded-lg">
@@ -348,7 +325,7 @@
             </div>
 
             <p class="text-center text-[11px] text-gray-500">
-                Qualquer dúvida ou problema no site, contate: 
+                Qualquer dúvida ou problema no site, contate:
                 <a href="mailto:danielcostas211@gmail.com" class="text-sage-700 font-semibold hover:underline">danielcostas211@gmail.com</a>
             </p>
 
@@ -373,7 +350,7 @@
                 <p class="text-xs text-warmgray-700 mt-1">Aceda às suas leituras e marcadores</p>
             </div>
 
-            <form onsubmit="handleAuthSubmit(event, 'Sessão iniciada com sucesso!')" class="space-y-4">
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-warmgray-700 mb-1">E-mail</label>
                     <input type="email" required placeholder="seu@email.com" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
@@ -388,7 +365,7 @@
             </form>
 
             <div class="mt-4 text-center text-xs text-warmgray-700 border-t border-cream-200 pt-3">
-                Ainda não tem conta? 
+                Ainda não tem conta?
                 <button onclick="switchModal('loginModal', 'registerModal')" class="text-sage-600 font-medium hover:underline">Registe-se</button>
             </div>
         </div>
@@ -409,7 +386,7 @@
                 <p class="text-xs text-warmgray-700 mt-1">Faça parte da nossa comunidade de leitores</p>
             </div>
 
-            <form onsubmit="handleAuthSubmit(event, 'Registo efetuado com sucesso!')" class="space-y-3">
+            <form onsubmit="handleRegisterSubmit(event)" class="space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-warmgray-700 mb-1">Nome Completo</label>
                     <input type="text" required placeholder="O seu nome" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
@@ -420,7 +397,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-warmgray-700 mb-1">Palavra-passe</label>
-                    <input type="password" required placeholder="Crie uma palavra-passe" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                    <input type="password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                 </div>
                 <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs mt-2">
                     Finalizar Registo
@@ -428,9 +405,38 @@
             </form>
 
             <div class="mt-4 text-center text-xs text-warmgray-700 border-t border-cream-200 pt-3">
-                Já tem uma conta? 
+                Já tem uma conta?
                 <button onclick="switchModal('registerModal', 'loginModal')" class="text-sage-600 font-medium hover:underline">Iniciar Sessão</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal do Carrinho -->
+    <div id="cartModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl border border-cream-200 p-6 shadow-xl relative">
+            <button onclick="closeModal('cartModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center mb-4">
+                <div class="w-10 h-10 bg-sage-100 text-sage-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                </div>
+                <h3 class="serif-font text-xl font-medium text-warmgray-800">O Seu Carrinho</h3>
+            </div>
+
+            <div id="cartItemsList" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+                <p id="cartEmptyMsg" class="text-xs text-center text-gray-400 py-4">O seu carrinho está vazio</p>
+            </div>
+
+            <div class="border-t border-cream-200 pt-3 flex items-center justify-between text-sm font-semibold text-warmgray-800 mb-4">
+                <span>Total</span>
+                <span id="cartTotal">€0.00</span>
+            </div>
+
+            <button onclick="handleCheckout()" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                Finalizar Compra
+            </button>
         </div>
     </div>
 
@@ -441,33 +447,25 @@
     </div>
 
     <script>
-        // Inicializar os ícones
+        // ---------- Estado global ----------
+        let clienteAtual = JSON.parse(localStorage.getItem('cliente') || 'null');
+        let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+
         lucide.createIcons();
 
-        // Lógica para o Menu Dropdown de Categorias
+        // ---------- Menus e modais ----------
         function toggleCategoriesMenu() {
             const menu = document.getElementById('categoriesMenu');
             const arrow = document.getElementById('categoriesArrow');
-            const isHidden = menu.classList.contains('hidden');
-            
-            if (isHidden) {
-                menu.classList.remove('hidden');
-                arrow.classList.add('rotate-180');
-            } else {
-                menu.classList.add('hidden');
-                arrow.classList.remove('rotate-180');
-            }
+            menu.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
         }
 
-        // Fechar dropdown ao clicar fora
         document.addEventListener('click', function(event) {
             const container = document.getElementById('categoriesDropdownContainer');
-            const menu = document.getElementById('categoriesMenu');
-            const arrow = document.getElementById('categoriesArrow');
-            
             if (container && !container.contains(event.target)) {
-                menu.classList.add('hidden');
-                arrow.classList.remove('rotate-180');
+                document.getElementById('categoriesMenu').classList.add('hidden');
+                document.getElementById('categoriesArrow').classList.remove('rotate-180');
             }
         });
 
@@ -477,70 +475,247 @@
             showNotification(`Filtro selecionado: ${categoryName}`);
         }
 
-        // Funções de Modal
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function switchModal(fromId, toId) { closeModal(fromId); openModal(toId); }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function switchModal(fromId, toId) {
-            closeModal(fromId);
-            openModal(toId);
-        }
-
-        // Notificação flutuante suave
         function showNotification(msg) {
             const box = document.getElementById('notificationBox');
-            const msgSpan = document.getElementById('notificationMessage');
-            msgSpan.innerText = msg;
+            document.getElementById('notificationMessage').innerText = msg;
             box.classList.remove('translate-y-20', 'opacity-0');
-            
-            setTimeout(() => {
-                box.classList.add('translate-y-20', 'opacity-0');
-            }, 3500);
+            setTimeout(() => box.classList.add('translate-y-20', 'opacity-0'), 3500);
         }
 
-        // Avaliações dos Leitores
-        function handleReviewSubmit(e) {
-            e.preventDefault();
-            const name = document.getElementById('reviewerName').value;
-            const book = document.getElementById('reviewBookTitle').value;
-            const ratingNum = document.getElementById('reviewRating').value;
-            const text = document.getElementById('reviewText').value;
-
-            const stars = '★'.repeat(ratingNum) + '☆'.repeat(5 - ratingNum);
-
-            const reviewsList = document.getElementById('reviewsList');
-            const newCard = document.createElement('div');
-            newCard.className = 'bg-white p-5 rounded-xl border border-cream-200 shadow-2xs space-y-3';
-            newCard.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold text-warmgray-800">${escapeHtml(name)}</span>
-                    <span class="text-amber-400 text-xs">${stars}</span>
-                </div>
-                <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">
-                    Livro: ${escapeHtml(book)}
-                </div>
-                <p class="text-xs text-warmgray-700 leading-relaxed italic">
-                    "${escapeHtml(text)}"
-                </p>
-                <span class="block text-[10px] text-gray-400">Publicado agora mesmo</span>
-            `;
-
-            reviewsList.prepend(newCard);
-            document.getElementById('reviewForm').reset();
-            showNotification('A sua opinião foi publicada com sucesso!');
+        function escapeHtml(text) {
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        function handleAuthSubmit(e, message) {
+        // ---------- Sessão do cliente ----------
+        function atualizarUISessao() {
+            const logado = !!clienteAtual;
+            document.getElementById('loginBtn').classList.toggle('hidden', logado);
+            document.getElementById('registerBtn').classList.toggle('hidden', logado);
+            document.getElementById('logoutBtn').classList.toggle('hidden', !logado);
+            const label = document.getElementById('contaLogadaLabel');
+            if (logado) {
+                label.textContent = 'Olá, ' + clienteAtual.nome.split(' ')[0];
+                label.classList.remove('hidden');
+            } else {
+                label.classList.add('hidden');
+            }
+        }
+
+        function handleLogout() {
+            clienteAtual = null;
+            localStorage.removeItem('cliente');
+            atualizarUISessao();
+            showNotification('Sessão terminada');
+        }
+
+        async function handleRegisterSubmit(e) {
             e.preventDefault();
+            const inputs = e.target.querySelectorAll('input');
+            const nome = inputs[0].value;
+            const email = inputs[1].value;
+            const senha = inputs[2].value;
+
+            try {
+                const resp = await fetch('/api/clientes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                clienteAtual = dados;
+                localStorage.setItem('cliente', JSON.stringify(dados));
+                e.target.reset();
+                closeModal('registerModal');
+                atualizarUISessao();
+                showNotification('Registo efetuado com sucesso!');
+            } catch (err) {
+                showNotification(err.message || 'Erro ao registar');
+            }
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const inputs = e.target.querySelectorAll('input');
+            const email = inputs[0].value;
+            const senha = inputs[1].value;
+
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                clienteAtual = dados;
+                localStorage.setItem('cliente', JSON.stringify(dados));
+                e.target.reset();
+                closeModal('loginModal');
+                atualizarUISessao();
+                showNotification('Sessão iniciada com sucesso!');
+            } catch (err) {
+                showNotification(err.message || 'E-mail ou senha incorretos');
+            }
+        }
+
+        // ---------- Avaliações ----------
+        async function carregarAvaliacoes() {
+            try {
+                const resp = await fetch('/api/avaliacoes');
+                const avaliacoes = await resp.json();
+
+                const reviewsList = document.getElementById('reviewsList');
+                reviewsList.innerHTML = '';
+
+                if (avaliacoes.length === 0) {
+                    reviewsList.innerHTML = '<p class="text-xs text-gray-400 col-span-3 text-center">Ainda não há avaliações. Seja o primeiro a opinar!</p>';
+                    return;
+                }
+
+                avaliacoes.forEach(av => {
+                    const stars = '★'.repeat(av.nota) + '☆'.repeat(5 - av.nota);
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-5 rounded-xl border border-cream-200 shadow-2xs space-y-3';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-warmgray-800">${escapeHtml(av.nome)}</span>
+                            <span class="text-amber-400 text-xs">${stars}</span>
+                        </div>
+                        <div class="text-[11px] text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded w-fit">
+                            Livro: ${escapeHtml(av.livro)}
+                        </div>
+                        <p class="text-xs text-warmgray-700 leading-relaxed italic">"${escapeHtml(av.comentario || '')}"</p>
+                        <span class="block text-[10px] text-gray-400">${new Date(av.criado_em).toLocaleDateString('pt-PT')}</span>
+                    `;
+                    reviewsList.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar avaliações', err);
+            }
+        }
+
+        async function handleReviewSubmit(e) {
+            e.preventDefault();
+
+            if (!clienteAtual) {
+                showNotification('Inicie sessão para avaliar um livro');
+                openModal('loginModal');
+                return;
+            }
+
+            const livro = document.getElementById('reviewBookTitle').value;
+            const nota = parseInt(document.getElementById('reviewRating').value, 10);
+            const comentario = document.getElementById('reviewText').value;
+
+            try {
+                const resp = await fetch('/api/avaliacoes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente_id: clienteAtual.id, livro, nota, comentario }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                document.getElementById('reviewForm').reset();
+                showNotification('A sua opinião foi publicada com sucesso!');
+                carregarAvaliacoes();
+            } catch (err) {
+                showNotification(err.message || 'Erro ao enviar avaliação');
+            }
+        }
+
+        // ---------- Carrinho ----------
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            const totalEl = document.getElementById('cartTotal');
+            const badge = document.getElementById('cartBadge');
+
+            list.innerHTML = '';
+            if (carrinho.length === 0) {
+                list.innerHTML = '<p id="cartEmptyMsg" class="text-xs text-center text-gray-400 py-4">O seu carrinho está vazio</p>';
+            } else {
+                carrinho.forEach((it, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between text-xs bg-cream-50 rounded-lg px-3 py-2';
+                    row.innerHTML = `
+                        <div>
+                            <p class="font-medium text-warmgray-800">${escapeHtml(it.item)}</p>
+                            <p class="text-gray-500">€${it.valor.toFixed(2)}</p>
+                        </div>
+                        <button onclick="removerDoCarrinho(${idx})" class="text-gray-400 hover:text-red-500">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    `;
+                    list.appendChild(row);
+                });
+                lucide.createIcons();
+            }
+
+            const total = carrinho.reduce((soma, it) => soma + it.valor, 0);
+            totalEl.textContent = '€' + total.toFixed(2);
+
+            if (carrinho.length > 0) {
+                badge.textContent = carrinho.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function handleAddToCart(e) {
+            e.preventDefault();
+            const item = document.getElementById('cartBookTitle').value;
+            const valor = parseFloat(document.getElementById('cartBookPrice').value);
+
+            carrinho.push({ item, valor });
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+            renderCart();
             e.target.reset();
-            closeModal('loginModal');
-            closeModal('registerModal');
-            showNotification(message);
+            showNotification('Livro adicionado ao carrinho!');
+        }
+
+        function removerDoCarrinho(idx) {
+            carrinho.splice(idx, 1);
+            localStorage.setItem('carrinho', JSON.stringify(carrinho));
+            renderCart();
+        }
+
+        async function handleCheckout() {
+            if (carrinho.length === 0) {
+                showNotification('O carrinho está vazio');
+                return;
+            }
+            if (!clienteAtual) {
+                showNotification('Inicie sessão para finalizar a compra');
+                closeModal('cartModal');
+                openModal('loginModal');
+                return;
+            }
+
+            try {
+                const resp = await fetch('/api/compras', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente_id: clienteAtual.id, itens: carrinho }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                carrinho = [];
+                localStorage.setItem('carrinho', '[]');
+                renderCart();
+                closeModal('cartModal');
+                showNotification('Compra finalizada com sucesso!');
+            } catch (err) {
+                showNotification(err.message || 'Erro ao finalizar compra');
+            }
         }
 
         function handleContactSubmit(e) {
@@ -549,9 +724,10 @@
             showNotification('Mensagem enviada com sucesso ao suporte!');
         }
 
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
+        // ---------- Inicialização ----------
+        atualizarUISessao();
+        renderCart();
+        carregarAvaliacoes();
     </script>
 </body>
 </html>
