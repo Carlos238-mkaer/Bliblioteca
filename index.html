@@ -602,7 +602,7 @@
         // ---------- Catálogo de Livros (Supabase) ----------
         async function carregarLivros() {
             try {
-                const { data: livros, error } = await supabase
+                const { data: livros, error } = await supabaseClient
                     .from('livros')
                     .select('*')
                     .order('criado_em', { ascending: false });
@@ -672,34 +672,34 @@
             try {
                 // 1. Envia a imagem de capa para o Storage (bucket "capas-livros")
                 const nomeCapa = `${Date.now()}-${capa.name}`;
-                const { error: uploadCapaError } = await supabase
+                const { error: uploadCapaError } = await supabaseClient
                     .storage
                     .from('capas-livros')
                     .upload(nomeCapa, capa);
 
                 if (uploadCapaError) throw uploadCapaError;
 
-                const { data: urlCapaData } = supabase
+                const { data: urlCapaData } = supabaseClient
                     .storage
                     .from('capas-livros')
                     .getPublicUrl(nomeCapa);
 
                 // 2. Envia o arquivo do livro (PDF/EPUB) para o Storage (bucket "arquivos-livros")
                 const nomeArquivoLivro = `${Date.now()}-${arquivoLivro.name}`;
-                const { error: uploadArquivoError } = await supabase
+                const { error: uploadArquivoError } = await supabaseClient
                     .storage
                     .from('arquivos-livros')
                     .upload(nomeArquivoLivro, arquivoLivro);
 
                 if (uploadArquivoError) throw uploadArquivoError;
 
-                const { data: urlArquivoData } = supabase
+                const { data: urlArquivoData } = supabaseClient
                     .storage
                     .from('arquivos-livros')
                     .getPublicUrl(nomeArquivoLivro);
 
                 // 3. Insere o livro na tabela "livros", com os links da capa e do arquivo
-                const { error: insertError } = await supabase
+                const { error: insertError } = await supabaseClient
                     .from('livros')
                     .insert([{
                         titulo,
