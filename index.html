@@ -139,7 +139,7 @@
                     </a>
                     <a href="#avaliacoes" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Opiniões dos Leitores</a>
                     <a href="#minha-biblioteca" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Minha Biblioteca</a>
-                    <a href="#admin" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Administração</a>
+                    <a href="admin.html" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Administração</a>
                     <a href="#contato" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Suporte</a>
                 </div>
 
@@ -234,30 +234,6 @@
                 <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-xs">
                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                     <span>Adicionar ao Carrinho</span>
-                </button>
-            </form>
-        </div>
-    </section>
-
-    <!-- Secção de Administração: Adicionar novo livro (com capa) ao Supabase -->
-    <section id="admin" class="py-12 px-4 sm:px-6 max-w-7xl mx-auto w-full">
-        <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md mx-auto shadow-2xs">
-            <h3 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Administração</h3>
-            <p class="text-xs text-warmgray-700 mb-4">Adicione um novo livro ao catálogo, com capa.</p>
-            <form id="addBookForm" onsubmit="handleAddBook(event)" class="space-y-3">
-                <input type="text" id="bookTitulo" required placeholder="Título do livro" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
-                <input type="text" id="bookAutor" required placeholder="Autor" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
-                <input type="text" id="bookGenero" placeholder="Género (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
-                <div>
-                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
-                    <input type="file" id="bookCapa" accept="image/*" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Arquivo do livro (PDF ou EPUB)</label>
-                    <input type="file" id="bookArquivo" accept=".pdf,.epub" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
-                </div>
-                <button type="submit" id="addBookBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
-                    Adicionar Livro
                 </button>
             </form>
         </div>
@@ -471,6 +447,23 @@
         </div>
     </div>
 
+    <!-- Modal de Leitura do Livro (partes liberadas para quem já comprou) -->
+    <div id="readModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl border border-cream-200 p-6 shadow-xl relative">
+            <button onclick="closeModal('readModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="text-center mb-4">
+                <div class="w-10 h-10 bg-sage-100 text-sage-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <h3 id="readModalTitle" class="serif-font text-lg font-medium text-warmgray-800">Livro</h3>
+                <p class="text-[11px] text-gray-400 mt-1">Os links abaixo expiram em alguns minutos, por segurança.</p>
+            </div>
+            <div id="readModalPartsList" class="space-y-2 max-h-72 overflow-y-auto"></div>
+        </div>
+    </div>
+
     <!-- Mensagem de Notificação -->
     <div id="notificationBox" class="fixed bottom-5 right-5 bg-warmgray-800 text-white text-xs px-4 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
         <i data-lucide="check-circle-2" class="w-4 h-4 text-sage-400"></i>
@@ -543,6 +536,8 @@
             clienteAtual = null;
             localStorage.removeItem('cliente');
             atualizarUISessao();
+            comprasDoCliente = [];
+            carregarLivros();
             showNotification('Sessão terminada');
         }
 
@@ -567,6 +562,8 @@
                 e.target.reset();
                 closeModal('registerModal');
                 atualizarUISessao();
+                await carregarComprasCliente();
+                carregarLivros();
                 showNotification('Registo efetuado com sucesso!');
             } catch (err) {
                 showNotification(err.message || 'Erro ao registar');
@@ -593,10 +590,33 @@
                 e.target.reset();
                 closeModal('loginModal');
                 atualizarUISessao();
+                await carregarComprasCliente();
+                carregarLivros();
                 showNotification('Sessão iniciada com sucesso!');
             } catch (err) {
                 showNotification(err.message || 'E-mail ou senha incorretos');
             }
+        }
+
+        // ---------- Compras do cliente (para saber quais livros ele já possui) ----------
+        let comprasDoCliente = [];
+
+        async function carregarComprasCliente() {
+            if (!clienteAtual) {
+                comprasDoCliente = [];
+                return;
+            }
+            try {
+                const resp = await fetch('/api/compras?cliente_id=' + clienteAtual.id);
+                comprasDoCliente = await resp.json();
+            } catch (err) {
+                console.error('Erro ao carregar compras do cliente', err);
+                comprasDoCliente = [];
+            }
+        }
+
+        function clienteComprouLivro(livroId) {
+            return comprasDoCliente.some(c => c.livro_id === livroId);
         }
 
         // ---------- Catálogo de Livros (Supabase) ----------
@@ -604,7 +624,7 @@
             try {
                 const { data: livros, error } = await supabaseClient
                     .from('livros')
-                    .select('*')
+                    .select('id, titulo, autor, genero, capa_url, preco')
                     .order('criado_em', { ascending: false });
 
                 if (error) throw error;
@@ -623,6 +643,8 @@
                 grid.innerHTML = '';
 
                 livros.forEach(livro => {
+                    const possuiLivro = clienteComprouLivro(livro.id);
+
                     const card = document.createElement('div');
                     card.className = 'bg-white rounded-xl border border-cream-200 overflow-hidden shadow-2xs flex flex-col';
                     card.innerHTML = `
@@ -631,11 +653,15 @@
                             <h3 class="serif-font text-sm font-medium text-warmgray-800 leading-snug">${escapeHtml(livro.titulo)}</h3>
                             <p class="text-xs text-gray-500 mt-1">${escapeHtml(livro.autor)}</p>
                             ${livro.genero ? `<span class="mt-2 inline-block text-[10px] bg-sage-50 text-sage-600 px-2 py-0.5 rounded w-fit">${escapeHtml(livro.genero)}</span>` : ''}
-                            ${livro.arquivo_url ? `
-                            <a href="${livro.arquivo_url}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center justify-center gap-1.5 bg-sage-500 hover:bg-sage-600 text-white text-[11px] font-medium py-2 rounded-lg transition">
+                            <div class="flex-1"></div>
+                            ${possuiLivro ? `
+                            <button onclick="abrirLivro('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}')" class="mt-3 w-full inline-flex items-center justify-center gap-1.5 bg-sage-500 hover:bg-sage-600 text-white text-[11px] font-medium py-2 rounded-lg transition">
                                 <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-                                <span>Ler / Baixar</span>
-                            </a>` : ''}
+                                <span>Ler agora</span>
+                            </button>` : `
+                            <button onclick="comprarLivro('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}', ${Number(livro.preco)})" class="mt-3 w-full inline-flex items-center justify-center gap-1.5 bg-warmgray-800 hover:bg-sage-600 text-white text-[11px] font-medium py-2 rounded-lg transition">
+                                <span>Comprar — R$ ${Number(livro.preco).toFixed(2)}</span>
+                            </button>`}
                         </div>
                     `;
                     grid.appendChild(card);
@@ -647,79 +673,58 @@
             }
         }
 
-        async function handleAddBook(e) {
-            e.preventDefault();
-            const btn = document.getElementById('addBookBtn');
-            const titulo = document.getElementById('bookTitulo').value;
-            const autor = document.getElementById('bookAutor').value;
-            const genero = document.getElementById('bookGenero').value;
-            const capa = document.getElementById('bookCapa').files[0];
-            const arquivoLivro = document.getElementById('bookArquivo').files[0];
-
-            if (!capa) {
-                showNotification('Selecione uma imagem de capa');
+        async function comprarLivro(livroId, titulo, preco) {
+            if (!clienteAtual) {
+                showNotification('Inicie sessão para comprar');
+                openModal('loginModal');
                 return;
             }
-            if (!arquivoLivro) {
-                showNotification('Selecione o arquivo do livro (PDF ou EPUB)');
-                return;
-            }
-
-            btn.disabled = true;
-            const textoOriginal = btn.textContent;
-            btn.textContent = 'Enviando...';
 
             try {
-                // 1. Envia a imagem de capa para o Storage (bucket "capas-livros")
-                const nomeCapa = `${Date.now()}-${capa.name}`;
-                const { error: uploadCapaError } = await supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .upload(nomeCapa, capa);
+                const resp = await fetch('/api/compras', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente_id: clienteAtual.id, item: titulo, valor: preco, livro_id: livroId }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
 
-                if (uploadCapaError) throw uploadCapaError;
-
-                const { data: urlCapaData } = supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .getPublicUrl(nomeCapa);
-
-                // 2. Envia o arquivo do livro (PDF/EPUB) para o Storage (bucket "arquivos-livros")
-                const nomeArquivoLivro = `${Date.now()}-${arquivoLivro.name}`;
-                const { error: uploadArquivoError } = await supabaseClient
-                    .storage
-                    .from('arquivos-livros')
-                    .upload(nomeArquivoLivro, arquivoLivro);
-
-                if (uploadArquivoError) throw uploadArquivoError;
-
-                const { data: urlArquivoData } = supabaseClient
-                    .storage
-                    .from('arquivos-livros')
-                    .getPublicUrl(nomeArquivoLivro);
-
-                // 3. Insere o livro na tabela "livros", com os links da capa e do arquivo
-                const { error: insertError } = await supabaseClient
-                    .from('livros')
-                    .insert([{
-                        titulo,
-                        autor,
-                        genero,
-                        capa_url: urlCapaData.publicUrl,
-                        arquivo_url: urlArquivoData.publicUrl
-                    }]);
-
-                if (insertError) throw insertError;
-
-                document.getElementById('addBookForm').reset();
-                showNotification('Livro adicionado com sucesso!');
+                showNotification('Compra realizada! Você já pode ler o livro.');
+                await carregarComprasCliente();
                 carregarLivros();
             } catch (err) {
-                console.error(err);
-                showNotification(err.message || 'Erro ao adicionar livro');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = textoOriginal;
+                showNotification(err.message || 'Erro ao comprar livro');
+            }
+        }
+
+        async function abrirLivro(livroId, titulo) {
+            try {
+                const resp = await fetch('/api/acesso-livro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cliente_id: clienteAtual.id, livro_id: livroId }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                document.getElementById('readModalTitle').textContent = titulo;
+                const list = document.getElementById('readModalPartsList');
+
+                if (!dados.partes || dados.partes.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Nenhuma parte disponível ainda. Volte em breve!</p>';
+                } else {
+                    list.innerHTML = dados.partes.map(p => `
+                        <a href="${p.link}" target="_blank" rel="noopener" class="flex items-center justify-between gap-2 bg-cream-50 hover:bg-cream-100 text-warmgray-800 text-xs font-medium px-3 py-2.5 rounded-lg transition">
+                            <span>Parte ${p.numero_parte}${(p.capitulo_inicio && p.capitulo_fim) ? ` (cap. ${p.capitulo_inicio}-${p.capitulo_fim})` : ''}</span>
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        </a>
+                    `).join('');
+                }
+
+                openModal('readModal');
+                lucide.createIcons();
+            } catch (err) {
+                showNotification(err.message || 'Erro ao liberar acesso ao livro');
             }
         }
 
@@ -883,10 +888,14 @@
         }
 
         // ---------- Inicialização ----------
-        atualizarUISessao();
-        renderCart();
-        carregarAvaliacoes();
-        carregarLivros();
+        async function iniciar() {
+            atualizarUISessao();
+            renderCart();
+            carregarAvaliacoes();
+            await carregarComprasCliente();
+            carregarLivros();
+        }
+        iniciar();
     </script>
 </body>
 </html>
