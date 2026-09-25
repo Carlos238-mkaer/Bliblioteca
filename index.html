@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -200,8 +202,8 @@
             </div>
         </div>
 
-        <!-- Estado Limpo do Catálogo -->
-        <div class="bg-white rounded-2xl border border-dashed border-sage-200 p-12 text-center max-w-3xl mx-auto my-6 shadow-2xs">
+        <!-- Estado Limpo do Catálogo (mostrado quando não há livros no Supabase) -->
+        <div id="catalogEmptyState" class="bg-white rounded-2xl border border-dashed border-sage-200 p-12 text-center max-w-3xl mx-auto my-6 shadow-2xs">
             <div class="w-16 h-16 bg-sage-50 text-sage-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i data-lucide="book-open-check" class="w-8 h-8 stroke-[1.5]"></i>
             </div>
@@ -217,6 +219,9 @@
             </div>
         </div>
 
+        <!-- Grelha Dinâmica de Livros (carregada do Supabase) -->
+        <div id="catalogGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 my-6"></div>
+
         <!-- Adicionar livro específico ao carrinho -->
         <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md mx-auto mt-6 shadow-2xs">
             <h3 class="text-sm font-semibold text-warmgray-800 mb-4 flex items-center gap-2">
@@ -229,6 +234,26 @@
                 <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-xs">
                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                     <span>Adicionar ao Carrinho</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Secção de Administração: Adicionar novo livro (com capa) ao Supabase -->
+    <section id="admin" class="py-12 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+        <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md mx-auto shadow-2xs">
+            <h3 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Administração</h3>
+            <p class="text-xs text-warmgray-700 mb-4">Adicione um novo livro ao catálogo, com capa.</p>
+            <form id="addBookForm" onsubmit="handleAddBook(event)" class="space-y-3">
+                <input type="text" id="bookTitulo" required placeholder="Título do livro" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                <input type="text" id="bookAutor" required placeholder="Autor" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                <input type="text" id="bookGenero" placeholder="Género (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                <div>
+                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
+                    <input type="file" id="bookCapa" accept="image/*" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                </div>
+                <button type="submit" id="addBookBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                    Adicionar Livro
                 </button>
             </form>
         </div>
@@ -448,6 +473,9 @@
         <span id="notificationMessage">Ação realizada com sucesso!</span>
     </div>
 
+    <!-- Cliente Supabase (precisa vir ANTES do script principal abaixo) -->
+    <script src="supabase.js"></script>
+
     <script>
         // ---------- Estado global ----------
         let clienteAtual = JSON.parse(localStorage.getItem('cliente') || 'null');
@@ -564,6 +592,100 @@
                 showNotification('Sessão iniciada com sucesso!');
             } catch (err) {
                 showNotification(err.message || 'E-mail ou senha incorretos');
+            }
+        }
+
+        // ---------- Catálogo de Livros (Supabase) ----------
+        async function carregarLivros() {
+            try {
+                const { data: livros, error } = await supabase
+                    .from('livros')
+                    .select('*')
+                    .order('criado_em', { ascending: false });
+
+                if (error) throw error;
+
+                const grid = document.getElementById('catalogGrid');
+                const emptyState = document.getElementById('catalogEmptyState');
+
+                if (!livros || livros.length === 0) {
+                    grid.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                grid.classList.remove('hidden');
+                grid.innerHTML = '';
+
+                livros.forEach(livro => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl border border-cream-200 overflow-hidden shadow-2xs flex flex-col';
+                    card.innerHTML = `
+                        <img src="${livro.capa_url || ''}" alt="${escapeHtml(livro.titulo)}" class="w-full h-56 object-cover bg-cream-100">
+                        <div class="p-3 flex-1 flex flex-col">
+                            <h3 class="serif-font text-sm font-medium text-warmgray-800 leading-snug">${escapeHtml(livro.titulo)}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${escapeHtml(livro.autor)}</p>
+                            ${livro.genero ? `<span class="mt-2 inline-block text-[10px] bg-sage-50 text-sage-600 px-2 py-0.5 rounded w-fit">${escapeHtml(livro.genero)}</span>` : ''}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar livros', err);
+                showNotification('Erro ao carregar o catálogo. Veja o console.');
+            }
+        }
+
+        async function handleAddBook(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addBookBtn');
+            const titulo = document.getElementById('bookTitulo').value;
+            const autor = document.getElementById('bookAutor').value;
+            const genero = document.getElementById('bookGenero').value;
+            const arquivo = document.getElementById('bookCapa').files[0];
+
+            if (!arquivo) {
+                showNotification('Selecione uma imagem de capa');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Enviando...';
+
+            try {
+                // 1. Envia a imagem de capa para o Storage (bucket "capas-livros")
+                const nomeArquivo = `${Date.now()}-${arquivo.name}`;
+                const { error: uploadError } = await supabase
+                    .storage
+                    .from('capas-livros')
+                    .upload(nomeArquivo, arquivo);
+
+                if (uploadError) throw uploadError;
+
+                // 2. Pega a URL pública da imagem que acabou de subir
+                const { data: urlData } = supabase
+                    .storage
+                    .from('capas-livros')
+                    .getPublicUrl(nomeArquivo);
+
+                // 3. Insere o livro na tabela "livros", já com o link da capa
+                const { error: insertError } = await supabase
+                    .from('livros')
+                    .insert([{ titulo, autor, genero, capa_url: urlData.publicUrl }]);
+
+                if (insertError) throw insertError;
+
+                document.getElementById('addBookForm').reset();
+                showNotification('Livro adicionado com sucesso!');
+                carregarLivros();
+            } catch (err) {
+                console.error(err);
+                showNotification(err.message || 'Erro ao adicionar livro');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
             }
         }
 
@@ -730,6 +852,7 @@
         atualizarUISessao();
         renderCart();
         carregarAvaliacoes();
+        carregarLivros();
     </script>
 </body>
 </html>
