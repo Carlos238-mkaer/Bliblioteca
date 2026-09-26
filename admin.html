@@ -134,7 +134,7 @@
 
         // ---------- Senha de acesso ----------
         // Troque esta senha por uma só sua antes de publicar.
-        const ADMIN_PASSWORD = "troque-esta-senha";
+        const ADMIN_PASSWORD = "Cd137197@dante@@";
 
         function handleAuth(e) {
             e.preventDefault();
@@ -306,10 +306,23 @@
                                     <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)}</p>
                                     <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}</p>
                                 </div>
+                                <button onclick="toggleEditForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
+                                    Editar
+                                </button>
                                 <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                     + Adicionar parte
                                 </button>
                             </div>
+
+                            <form id="editForm-${livro.id}" onsubmit="handleEditBook(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
+                                <input type="text" id="editTitulo-${livro.id}" required value="${escapeHtml(livro.titulo)}" placeholder="Título" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <input type="text" id="editAutor-${livro.id}" required value="${escapeHtml(livro.autor)}" placeholder="Autor" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <input type="text" id="editGenero-${livro.id}" value="${escapeHtml(livro.genero || '')}" placeholder="Género" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <input type="number" id="editPreco-${livro.id}" required step="0.01" min="0.01" value="${livro.preco}" placeholder="Preço" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                    Salvar alterações
+                                </button>
+                            </form>
 
                             ${partes.length > 0 ? `
                             <div class="mt-3 pt-3 border-t border-cream-100 space-y-1.5">
@@ -342,6 +355,40 @@
 
         function toggleParteForm(livroId) {
             document.getElementById(`parteForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        function toggleEditForm(livroId) {
+            document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function handleEditBook(e, livroId) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const titulo = document.getElementById(`editTitulo-${livroId}`).value;
+            const autor = document.getElementById(`editAutor-${livroId}`).value;
+            const genero = document.getElementById(`editGenero-${livroId}`).value;
+            const preco = parseFloat(document.getElementById(`editPreco-${livroId}`).value);
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .update({ titulo, autor, genero, preco })
+                    .eq('id', livroId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao salvar alterações');
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
         }
 
         async function handleAddParte(e, livroId) {
