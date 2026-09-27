@@ -37,14 +37,34 @@ export default async function handler(req, res) {
 
     try {
       const [compra] = await sql`
-        INSERT INTO compras (cliente_id, item, valor, livro_id)
-        VALUES (${cliente_id}, ${item}, ${valor}, ${livro_id || null})
+        INSERT INTO compras (cliente_id, item, valor, livro_id, status)
+        VALUES (${cliente_id}, ${item}, ${valor}, ${livro_id || null}, 'pendente')
         RETURNING id, item, valor, status, livro_id
       `;
       return res.status(201).json(compra);
     } catch (e) {
       console.error(e);
       return res.status(500).json({ erro: 'Erro ao registrar compra' });
+    }
+  }
+
+  if (req.method === 'PATCH') {
+    const { id, status } = req.body || {};
+
+    if (!id || !status) {
+      return res.status(400).json({ erro: 'Envie id e status' });
+    }
+
+    try {
+      const [atualizada] = await sql`
+        UPDATE compras SET status = ${status}
+        WHERE id = ${id}
+        RETURNING id, status, livro_id
+      `;
+      return res.status(200).json(atualizada);
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ erro: 'Erro ao atualizar compra' });
     }
   }
 
