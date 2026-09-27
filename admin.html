@@ -61,16 +61,26 @@
         </header>
 
         <!-- Abas -->
-        <nav class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 flex gap-2 text-xs sm:text-sm">
-            <button onclick="mudarAba('compras')" id="tabBtn-compras" class="tab-btn px-4 py-2 rounded-full font-medium bg-sage-500 text-white transition">Compras</button>
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 flex gap-2 text-xs sm:text-sm flex-wrap">
+            <button onclick="mudarAba('pendentes')" id="tabBtn-pendentes" class="tab-btn px-4 py-2 rounded-full font-medium bg-sage-500 text-white transition">Pagamentos Pendentes</button>
+            <button onclick="mudarAba('compras')" id="tabBtn-compras" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Todas as Compras</button>
             <button onclick="mudarAba('avaliacoes')" id="tabBtn-avaliacoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Avaliações</button>
             <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
         </nav>
 
         <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
 
+            <!-- Aba: Pagamentos Pendentes -->
+            <section id="aba-pendentes" class="tab-content">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Pagamentos aguardando confirmação</h2>
+                <p class="text-xs text-warmgray-700 mb-4">Confira no seu banco se o Pix caiu, depois clique em "Confirmar" para liberar o livro ao cliente.</p>
+                <div id="pendentesList" class="space-y-3">
+                    <p class="text-xs text-gray-400 text-center">A carregar...</p>
+                </div>
+            </section>
+
             <!-- Aba: Compras -->
-            <section id="aba-compras" class="tab-content">
+            <section id="aba-compras" class="tab-content hidden">
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Compras realizadas</h2>
                 <div class="bg-white rounded-xl border border-cream-200 overflow-x-auto shadow-2xs">
                     <table class="w-full text-xs text-left">
@@ -134,7 +144,7 @@
 
         // ---------- Senha de acesso ----------
         // Troque esta senha por uma só sua antes de publicar.
-        const ADMIN_PASSWORD = "Cd137197@dante@@";
+        const ADMIN_PASSWORD = "troque-esta-senha";
 
         function handleAuth(e) {
             e.preventDefault();
@@ -142,6 +152,7 @@
             if (senha === ADMIN_PASSWORD) {
                 document.getElementById('authGate').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
+                carregarPendentes();
                 carregarCompras();
                 carregarAvaliacoesAdmin();
                 carregarLivrosAdmin();
@@ -166,6 +177,60 @@
 
         function escapeHtml(text) {
             return String(text ?? '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // ---------- Pagamentos pendentes ----------
+        async function carregarPendentes() {
+            const container = document.getElementById('pendentesList');
+            try {
+                const resp = await fetch('/api/compras');
+                const compras = await resp.json();
+                const pendentes = (compras || []).filter(c => c.status === 'pendente');
+
+                if (pendentes.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Nenhum pagamento pendente no momento 🎉</p>';
+                    return;
+                }
+
+                container.innerHTML = pendentes.map(c => `
+                    <div class="bg-white rounded-xl border border-cream-200 p-4 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+                        <div>
+                            <p class="text-sm font-medium text-warmgray-800">${escapeHtml(c.item)}</p>
+                            <p class="text-xs text-gray-500">${escapeHtml(c.nome)} · ${escapeHtml(c.email)}</p>
+                            <p class="text-[11px] text-gray-400">${new Date(c.criado_em).toLocaleString('pt-PT')}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold text-warmgray-800">R$ ${Number(c.valor).toFixed(2)}</span>
+                            <button onclick="confirmarPagamento(${c.id})" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
+                                Confirmar pagamento
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar pagamentos pendentes</p>';
+            }
+        }
+
+        async function confirmarPagamento(id) {
+            if (!confirm('Confirma que o Pix caiu na sua conta para essa compra?')) return;
+
+            try {
+                const resp = await fetch('/api/compras', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status: 'confirmada' }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                carregarPendentes();
+                carregarCompras();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao confirmar pagamento');
+            }
         }
 
         // ---------- Compras ----------
