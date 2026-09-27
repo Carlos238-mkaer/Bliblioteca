@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+]<!DOCTYPE html>
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
@@ -120,7 +120,9 @@
                         <input type="number" id="bookPreco" required step="0.01" min="0.01" placeholder="Preço do livro (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <div>
                             <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
-                            <input type="file" id="bookCapa" accept="image/*" required class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <input type="file" id="bookCapa" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
+                            <input type="url" id="bookCapaUrl" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         </div>
                         <button type="submit" id="addBookBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
                             Adicionar Livro
@@ -144,7 +146,7 @@
 
         // ---------- Senha de acesso ----------
         // Troque esta senha por uma só sua antes de publicar.
-        const ADMIN_PASSWORD = "Cd137197@dante@@";
+        const ADMIN_PASSWORD = "troque-esta-senha";
 
         function handleAuth(e) {
             e.preventDefault();
@@ -293,6 +295,32 @@
             }
         }
 
+        // ---------- Livros: função auxiliar para resolver a capa (arquivo OU link) ----------
+        async function resolverUrlCapa(arquivo, urlExterna) {
+            if (arquivo) {
+                const nomeCapa = `${Date.now()}-${arquivo.name}`;
+                const { error: uploadError } = await supabaseClient
+                    .storage
+                    .from('capas-livros')
+                    .upload(nomeCapa, arquivo);
+
+                if (uploadError) throw uploadError;
+
+                const { data } = supabaseClient
+                    .storage
+                    .from('capas-livros')
+                    .getPublicUrl(nomeCapa);
+
+                return data.publicUrl;
+            }
+
+            if (urlExterna) {
+                return urlExterna.trim();
+            }
+
+            return null;
+        }
+
         // ---------- Livros: adicionar novo ----------
         async function handleAddBook(e) {
             e.preventDefault();
@@ -302,9 +330,10 @@
             const genero = document.getElementById('bookGenero').value;
             const preco = parseFloat(document.getElementById('bookPreco').value);
             const capa = document.getElementById('bookCapa').files[0];
+            const capaUrl = document.getElementById('bookCapaUrl').value;
 
-            if (!capa) {
-                alert('Selecione uma imagem de capa');
+            if (!capa && !capaUrl) {
+                alert('Envie uma imagem de capa ou cole o link de uma imagem');
                 return;
             }
 
@@ -313,22 +342,11 @@
             btn.textContent = 'Enviando...';
 
             try {
-                const nomeCapa = `${Date.now()}-${capa.name}`;
-                const { error: uploadError } = await supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .upload(nomeCapa, capa);
-
-                if (uploadError) throw uploadError;
-
-                const { data: urlCapaData } = supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .getPublicUrl(nomeCapa);
+                const urlFinal = await resolverUrlCapa(capa, capaUrl);
 
                 const { error: insertError } = await supabaseClient
                     .from('livros')
-                    .insert([{ titulo, autor, genero, preco, capa_url: urlCapaData.publicUrl }]);
+                    .insert([{ titulo, autor, genero, preco, capa_url: urlFinal }]);
 
                 if (insertError) throw insertError;
 
@@ -374,6 +392,9 @@
                                 <button onclick="toggleEditForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
                                     Editar
                                 </button>
+                                <button onclick="toggleTrocarCapaForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
+                                    Trocar capa
+                                </button>
                                 <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                     + Adicionar parte
                                 </button>
@@ -386,6 +407,15 @@
                                 <input type="number" id="editPreco-${livro.id}" required step="0.01" min="0.01" value="${livro.preco}" placeholder="Preço" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
                                     Salvar alterações
+                                </button>
+                            </form>
+
+                            <form id="trocarCapaForm-${livro.id}" onsubmit="handleTrocarCapa(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
+                                <input type="file" id="novaCapaArquivo-${livro.id}" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                <p class="text-[11px] text-gray-400 text-center">— ou —</p>
+                                <input type="url" id="novaCapaUrl-${livro.id}" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                    Salvar nova capa
                                 </button>
                             </form>
 
@@ -424,6 +454,44 @@
 
         function toggleEditForm(livroId) {
             document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        function toggleTrocarCapaForm(livroId) {
+            document.getElementById(`trocarCapaForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function handleTrocarCapa(e, livroId) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const arquivo = document.getElementById(`novaCapaArquivo-${livroId}`).files[0];
+            const url = document.getElementById(`novaCapaUrl-${livroId}`).value;
+
+            if (!arquivo && !url) {
+                alert('Envie uma imagem ou cole o link de uma imagem');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const novaUrl = await resolverUrlCapa(arquivo, url);
+
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .update({ capa_url: novaUrl })
+                    .eq('id', livroId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao trocar a capa');
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
         }
 
         async function handleEditBook(e, livroId) {
