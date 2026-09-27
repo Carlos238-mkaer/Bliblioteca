@@ -20,15 +20,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Confirma que este cliente realmente comprou este livro
+    // 1. Confirma que este cliente realmente comprou e TEVE O PAGAMENTO CONFIRMADO
     const compras = await sql`
       SELECT id FROM compras
-      WHERE cliente_id = ${cliente_id} AND livro_id = ${livro_id}
+      WHERE cliente_id = ${cliente_id} AND livro_id = ${livro_id} AND status = 'confirmada'
       LIMIT 1
     `;
 
     if (compras.length === 0) {
-      return res.status(403).json({ erro: 'Você ainda não comprou este livro' });
+      return res.status(403).json({ erro: 'Compra ainda não confirmada. Aguarde a confirmação do pagamento.' });
     }
 
     // 2. Busca todas as partes já disponíveis desse livro (inclui partes futuras automaticamente)
