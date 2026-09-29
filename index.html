@@ -200,6 +200,11 @@
         </div>
     </section>
 
+    <!-- Livro em Destaque -->
+    <section id="destaqueSection" class="hidden px-4 sm:px-6 max-w-7xl mx-auto w-full">
+        <div id="destaqueCard"></div>
+    </section>
+
     <section id="catalogo" class="py-10 px-4 sm:px-6 max-w-7xl mx-auto w-full">
         <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-cream-200 gap-4">
             <div>
@@ -615,7 +620,7 @@
             document.getElementById('categoriesMenu').classList.add('hidden');
             document.getElementById('categoriesArrow').classList.remove('rotate-180');
             filtroCategoriaAtual = categoryName;
-            carregarLivros();
+            carregarLivros(); carregarDestaque();
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -653,7 +658,7 @@
             localStorage.removeItem('cliente');
             atualizarUISessao();
             comprasDoCliente = [];
-            carregarLivros();
+            carregarLivros(); carregarDestaque();
             showNotification('Sessão terminada');
         }
 
@@ -679,7 +684,7 @@
                 closeModal('registerModal');
                 atualizarUISessao();
                 await carregarComprasCliente();
-                carregarLivros();
+                carregarLivros(); carregarDestaque();
                 showNotification('Registo efetuado com sucesso!');
             } catch (err) {
                 showNotification(err.message || 'Erro ao registar');
@@ -707,7 +712,7 @@
                 closeModal('loginModal');
                 atualizarUISessao();
                 await carregarComprasCliente();
-                carregarLivros();
+                carregarLivros(); carregarDestaque();
                 showNotification('Sessão iniciada com sucesso!');
             } catch (err) {
                 showNotification(err.message || 'E-mail ou senha incorretos');
@@ -770,6 +775,82 @@
                 lucide.createIcons();
             } catch (err) {
                 console.error('Erro ao carregar categorias', err);
+            }
+        }
+
+        // ---------- Livro em Destaque ----------
+        async function carregarDestaque() {
+            try {
+                const { data: livros, error } = await supabaseClient
+                    .from('livros')
+                    .select('id, titulo, autor, genero, capa_url, preco, destaque')
+                    .eq('destaque', true)
+                    .order('criado_em', { ascending: false })
+                    .limit(1);
+
+                if (error) throw error;
+
+                const section = document.getElementById('destaqueSection');
+                const card = document.getElementById('destaqueCard');
+
+                if (!livros || livros.length === 0) {
+                    section.classList.add('hidden');
+                    return;
+                }
+
+                const livro = livros[0];
+                const possuiLivro = clienteComprouLivro(livro.id);
+                const pendente = !possuiLivro && clientePossuiPendente(livro.id);
+                const jaNoCarrinho = carrinho.some(it => it.livro_id === livro.id);
+
+                let botaoHtml;
+                if (possuiLivro) {
+                    botaoHtml = `
+                        <button onclick="abrirLivro('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}')" class="inline-flex items-center justify-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold px-6 py-2.5 rounded-full transition shadow-md">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>Ler agora</span>
+                        </button>`;
+                } else if (pendente) {
+                    botaoHtml = `
+                        <button disabled class="inline-flex items-center justify-center gap-2 bg-white/60 text-warmgray-700 text-sm font-semibold px-6 py-2.5 rounded-full cursor-not-allowed">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            <span>Pagamento pendente</span>
+                        </button>`;
+                } else if (jaNoCarrinho) {
+                    botaoHtml = `
+                        <button disabled class="inline-flex items-center justify-center gap-2 bg-white/60 text-warmgray-700 text-sm font-semibold px-6 py-2.5 rounded-full cursor-not-allowed">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>No carrinho</span>
+                        </button>`;
+                } else {
+                    botaoHtml = `
+                        <button onclick="adicionarLivroAoCarrinho('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}', ${Number(livro.preco)})" class="inline-flex items-center justify-center gap-2 bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold px-6 py-2.5 rounded-full transition shadow-md">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                            <span>Comprar — R$ ${Number(livro.preco).toFixed(2)}</span>
+                        </button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-700 to-sage-600 p-6 md:p-10 shadow-lg flex flex-col md:flex-row items-center gap-6 md:gap-10">
+                        <img src="${livro.capa_url || ''}" alt="${escapeHtml(livro.titulo)}" class="w-40 md:w-52 rounded-xl shadow-2xl border-4 border-white/20 object-cover">
+                        <div class="flex-1 text-center md:text-left">
+                            <span class="inline-block bg-emerald-300 text-emerald-900 text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                                ✦ Exclusivo
+                            </span>
+                            <h2 class="serif-font text-2xl md:text-4xl font-bold mb-2" style="color:#6dffb0; text-shadow: 0 0 18px rgba(109,255,176,0.65), 0 0 4px rgba(255,255,255,0.4);">
+                                ${escapeHtml(livro.titulo)}
+                            </h2>
+                            <p class="text-sm text-emerald-50/90 mb-1">${escapeHtml(livro.autor)}</p>
+                            ${livro.genero ? `<span class="inline-block text-[11px] bg-white/15 text-white px-2.5 py-0.5 rounded-full mb-4">${escapeHtml(livro.genero)}</span>` : ''}
+                            <div class="mt-4">${botaoHtml}</div>
+                        </div>
+                    </div>
+                `;
+
+                section.classList.remove('hidden');
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Erro ao carregar livro em destaque', err);
             }
         }
 
@@ -871,7 +952,7 @@
             carrinho.push({ item: titulo, valor: preco, livro_id: livroId });
             localStorage.setItem('carrinho', JSON.stringify(carrinho));
             renderCart();
-            carregarLivros();
+            carregarLivros(); carregarDestaque();
             showNotification('Livro adicionado ao carrinho!');
         }
 
@@ -1064,7 +1145,7 @@
                 closeModal('cartModal');
 
                 await carregarComprasCliente();
-                carregarLivros();
+                carregarLivros(); carregarDestaque();
 
                 mostrarPixModal(total);
             } catch (err) {
@@ -1085,7 +1166,7 @@
             carregarAvaliacoes();
             carregarCategorias();
             await carregarComprasCliente();
-            carregarLivros();
+            carregarLivros(); carregarDestaque();
         }
         iniciar();
     </script>
