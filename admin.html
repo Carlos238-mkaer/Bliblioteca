@@ -380,15 +380,19 @@
                 container.innerHTML = livros.map(livro => {
                     const partes = (livro.partes_livro || []).slice().sort((a, b) => a.numero_parte - b.numero_parte);
                     const proximaParte = partes.length > 0 ? Math.max(...partes.map(p => p.numero_parte)) + 1 : 1;
+                    const emDestaque = !!livro.destaque;
 
                     return `
-                        <div class="bg-white rounded-xl border border-cream-200 p-4 shadow-2xs">
+                        <div class="bg-white rounded-xl border ${emDestaque ? 'border-emerald-400 ring-1 ring-emerald-200' : 'border-cream-200'} p-4 shadow-2xs">
                             <div class="flex items-center gap-3 flex-wrap">
                                 <img src="${livro.capa_url || ''}" class="w-12 h-16 object-cover rounded bg-cream-100">
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)}</p>
+                                    <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)} ${emDestaque ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">EM DESTAQUE</span>' : ''}</p>
                                     <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}</p>
                                 </div>
+                                <button onclick="toggleDestaque('${livro.id}', ${emDestaque})" class="text-xs ${emDestaque ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
+                                    ${emDestaque ? '★ Em destaque' : '☆ Destacar'}
+                                </button>
                                 <button onclick="toggleEditForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
                                     Editar
                                 </button>
@@ -454,6 +458,22 @@
 
         function toggleEditForm(livroId) {
             document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function toggleDestaque(livroId, estadoAtual) {
+            try {
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .update({ destaque: !estadoAtual })
+                    .eq('id', livroId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao atualizar destaque');
+            }
         }
 
         function toggleTrocarCapaForm(livroId) {
