@@ -96,39 +96,42 @@
         <nav class="bg-sage-100/90 border-t border-b border-sage-200/60 shadow-xs">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs sm:text-sm">
 
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center gap-4">
                     <!-- Logótipo da Marca -->
                     <a href="#" class="flex items-center gap-2 pr-4 border-r border-sage-200 font-serif text-lg font-bold text-sage-800">
                         <i data-lucide="book-open" class="w-5 h-5 text-sage-600"></i>
                         <span>Biblioteca Digital</span>
                     </a>
 
-                    <!-- Menu Pendente de Categorias -->
-                    <div class="relative inline-block text-left" id="categoriesDropdownContainer">
-                        <button onclick="toggleCategoriesMenu()" id="categoriesBtn" class="flex items-center gap-1 font-medium text-warmgray-800 hover:text-sage-600 py-1 focus:outline-none transition">
-                            <span>Categorias</span>
-                            <i data-lucide="chevron-down" id="categoriesArrow" class="w-3.5 h-3.5 transition-transform duration-200"></i>
-                        </button>
+                    <!-- Links (só aparecem em telas médias/grandes) -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <!-- Menu Pendente de Categorias -->
+                        <div class="relative inline-block text-left" id="categoriesDropdownContainer">
+                            <button onclick="toggleCategoriesMenu()" id="categoriesBtn" class="flex items-center gap-1 font-medium text-warmgray-800 hover:text-sage-600 py-1 focus:outline-none transition">
+                                <span>Categorias</span>
+                                <i data-lucide="chevron-down" id="categoriesArrow" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+                            </button>
 
-                        <!-- Lista Dropdown de Categorias (preenchida dinamicamente com base nos livros cadastrados) -->
-                        <div id="categoriesMenu" class="hidden absolute left-0 top-full mt-1 w-52 bg-white border border-cream-200 rounded-xl shadow-lg py-2 z-50">
-                            <a href="#catalogo" onclick="filterCategory(null)" class="flex items-center justify-between px-4 py-2 text-xs font-medium text-warmgray-800 hover:bg-sage-50 hover:text-sage-600 transition border-b border-cream-100 mb-1 pb-2">
-                                <span>Ver todos os livros</span>
-                            </a>
-                            <div id="categoriesList">
-                                <p class="px-4 py-2 text-[11px] text-gray-400">Nenhuma categoria ainda</p>
+                            <!-- Lista Dropdown de Categorias (preenchida dinamicamente com base nos livros cadastrados) -->
+                            <div id="categoriesMenu" class="hidden absolute left-0 top-full mt-1 w-52 bg-white border border-cream-200 rounded-xl shadow-lg py-2 z-50">
+                                <a href="#catalogo" onclick="filterCategory(null)" class="flex items-center justify-between px-4 py-2 text-xs font-medium text-warmgray-800 hover:bg-sage-50 hover:text-sage-600 transition border-b border-cream-100 mb-1 pb-2">
+                                    <span>Ver todos os livros</span>
+                                </a>
+                                <div id="categoriesList">
+                                    <p class="px-4 py-2 text-[11px] text-gray-400">Nenhuma categoria ainda</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <a href="#catalogo" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Lançamentos</a>
-                    <a href="#catalogo" class="font-medium text-warmgray-800 hover:text-sage-600 transition hidden sm:inline-flex items-center gap-1">
-                        Clube de Leitura
-                    </a>
-                    <a href="#avaliacoes" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Opiniões dos Leitores</a>
-                    <a href="#minha-biblioteca" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Minha Biblioteca</a>
-                    <a href="admin.html" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Administração</a>
-                    <a href="#contato" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Suporte</a>
+                        <a href="#catalogo" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Lançamentos</a>
+                        <a href="#catalogo" class="font-medium text-warmgray-800 hover:text-sage-600 transition inline-flex items-center gap-1">
+                            Clube de Leitura
+                        </a>
+                        <a href="#avaliacoes" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Opiniões dos Leitores</a>
+                        <a href="#minha-biblioteca" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Minha Biblioteca</a>
+                        <a href="admin.html" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Administração</a>
+                        <a href="#contato" class="font-medium text-warmgray-800 hover:text-sage-600 transition">Suporte</a>
+                    </div>
                 </div>
 
                 <div class="hidden md:flex items-center space-x-3 text-xs text-warmgray-700 pl-4 border-l border-sage-200">
@@ -137,6 +140,21 @@
                         Leitura Digital Ilimitada
                     </span>
                 </div>
+
+                <!-- Botão hambúrguer (só aparece no celular) -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-1.5 text-warmgray-800">
+                    <i data-lucide="menu" id="mobileMenuIcon" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Painel do menu mobile (some por padrão, some no desktop) -->
+            <div id="mobileNavPanel" class="hidden md:hidden flex-col px-4 sm:px-6 pb-3 text-sm border-t border-sage-200/60 pt-2">
+                <a href="#catalogo" onclick="toggleMobileMenu()" class="block py-2 font-medium text-warmgray-800">Catálogo / Categorias</a>
+                <a href="#catalogo" onclick="toggleMobileMenu()" class="block py-2 font-medium text-warmgray-800">Lançamentos</a>
+                <a href="#avaliacoes" onclick="toggleMobileMenu()" class="block py-2 font-medium text-warmgray-800">Opiniões dos Leitores</a>
+                <a href="#minha-biblioteca" onclick="toggleMobileMenu()" class="block py-2 font-medium text-warmgray-800">Minha Biblioteca</a>
+                <a href="admin.html" class="block py-2 font-medium text-warmgray-800">Administração</a>
+                <a href="#contato" onclick="toggleMobileMenu()" class="block py-2 font-medium text-warmgray-800">Suporte</a>
             </div>
         </nav>
     </header>
@@ -569,6 +587,18 @@
             const arrow = document.getElementById('categoriesArrow');
             menu.classList.toggle('hidden');
             arrow.classList.toggle('rotate-180');
+        }
+
+        function toggleMobileMenu() {
+            const painel = document.getElementById('mobileNavPanel');
+            const aberto = !painel.classList.contains('hidden');
+            if (aberto) {
+                painel.classList.add('hidden');
+                painel.classList.remove('flex');
+            } else {
+                painel.classList.remove('hidden');
+                painel.classList.add('flex');
+            }
         }
 
         document.addEventListener('click', function(event) {
