@@ -117,6 +117,7 @@
                         <input type="text" id="bookTitulo" required placeholder="Título do livro" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <input type="text" id="bookAutor" required placeholder="Autor" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <input type="text" id="bookGenero" placeholder="Género (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <input type="text" id="bookColecao" placeholder="Coleção/Saga (opcional, ex: Trilogia do Reino)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <input type="number" id="bookPreco" required step="0.01" min="0.01" placeholder="Preço do livro (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <div>
                             <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
@@ -328,6 +329,7 @@
             const titulo = document.getElementById('bookTitulo').value;
             const autor = document.getElementById('bookAutor').value;
             const genero = document.getElementById('bookGenero').value;
+            const colecao = document.getElementById('bookColecao').value;
             const preco = parseFloat(document.getElementById('bookPreco').value);
             const capa = document.getElementById('bookCapa').files[0];
             const capaUrl = document.getElementById('bookCapaUrl').value;
@@ -346,7 +348,7 @@
 
                 const { error: insertError } = await supabaseClient
                     .from('livros')
-                    .insert([{ titulo, autor, genero, preco, capa_url: urlFinal }]);
+                    .insert([{ titulo, autor, genero, colecao: colecao || null, preco, capa_url: urlFinal }]);
 
                 if (insertError) throw insertError;
 
@@ -389,7 +391,7 @@
                                 <img src="${livro.capa_url || ''}" class="w-12 h-16 object-cover rounded bg-cream-100">
                                 <div class="flex-1">
                                     <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)} ${ehExclusivo ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">EXCLUSIVO</span>' : ''} ${emDestaque ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">EM DESTAQUE</span>' : ''}</p>
-                                    <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}</p>
+                                    <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}${livro.colecao ? ` · <span class="text-sage-600">${escapeHtml(livro.colecao)}</span>` : ''}</p>
                                 </div>
                                 <button onclick="toggleExclusivo('${livro.id}', ${ehExclusivo})" class="text-xs ${ehExclusivo ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
                                     ${ehExclusivo ? '👑 Exclusivo' : '👑 Marcar Exclusivo'}
@@ -415,6 +417,7 @@
                                 <input type="text" id="editTitulo-${livro.id}" required value="${escapeHtml(livro.titulo)}" placeholder="Título" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <input type="text" id="editAutor-${livro.id}" required value="${escapeHtml(livro.autor)}" placeholder="Autor" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <input type="text" id="editGenero-${livro.id}" value="${escapeHtml(livro.genero || '')}" placeholder="Género" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <input type="text" id="editColecao-${livro.id}" value="${escapeHtml(livro.colecao || '')}" placeholder="Coleção/Saga (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <input type="number" id="editPreco-${livro.id}" required step="0.01" min="0.01" value="${livro.preco}" placeholder="Preço" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
                                     Salvar alterações
@@ -544,6 +547,7 @@
             const titulo = document.getElementById(`editTitulo-${livroId}`).value;
             const autor = document.getElementById(`editAutor-${livroId}`).value;
             const genero = document.getElementById(`editGenero-${livroId}`).value;
+            const colecao = document.getElementById(`editColecao-${livroId}`).value;
             const preco = parseFloat(document.getElementById(`editPreco-${livroId}`).value);
 
             btn.disabled = true;
@@ -553,7 +557,7 @@
             try {
                 const { error } = await supabaseClient
                     .from('livros')
-                    .update({ titulo, autor, genero, preco })
+                    .update({ titulo, autor, genero, colecao: colecao || null, preco })
                     .eq('id', livroId);
 
                 if (error) throw error;
