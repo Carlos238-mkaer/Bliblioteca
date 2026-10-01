@@ -2,7 +2,7 @@
 
 Plataforma de leitura online — um site simples e elegante para catálogo de livros, avaliações de leitores e gestão de conta, com visual suave inspirado em tons de sálvia e creme.
 
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![Status](https://img.shields.io/badge/status-em%20Pronto-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## ✨ Funcionalidades
