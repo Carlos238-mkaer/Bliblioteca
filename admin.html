@@ -204,6 +204,9 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-warmgray-800">R$ ${Number(c.valor).toFixed(2)}</span>
+                            <button onclick="recusarPagamento(${c.id})" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
+                                Recusar
+                            </button>
                             <button onclick="confirmarPagamento(${c.id})" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                 Confirmar pagamento
                             </button>
@@ -213,6 +216,26 @@
             } catch (err) {
                 console.error(err);
                 container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar pagamentos pendentes</p>';
+            }
+        }
+
+        async function recusarPagamento(id) {
+            if (!confirm('Recusar esse pagamento? O cliente poderá tentar comprar de novo.')) return;
+
+            try {
+                const resp = await fetch('/api/compras', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status: 'recusada' }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                carregarPendentes();
+                carregarCompras();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao recusar pagamento');
             }
         }
 
@@ -411,6 +434,9 @@
                                 <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                     + Adicionar parte
                                 </button>
+                                <button onclick="deletarLivro('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}')" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
+                                    Excluir
+                                </button>
                             </div>
 
                             <form id="editForm-${livro.id}" onsubmit="handleEditBook(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
@@ -468,6 +494,25 @@
 
         function toggleEditForm(livroId) {
             document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function deletarLivro(livroId, titulo) {
+            const confirmacao = prompt(`Para excluir "${titulo}" de vez (junto com todas as partes dele), digite EXCLUIR:`);
+            if (confirmacao !== 'EXCLUIR') return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .delete()
+                    .eq('id', livroId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao excluir livro');
+            }
         }
 
         async function toggleExclusivo(livroId, estadoAtual) {
