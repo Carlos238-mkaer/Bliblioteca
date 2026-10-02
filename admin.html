@@ -208,10 +208,10 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-warmgray-800">R$ ${Number(c.valor).toFixed(2)}</span>
-                            <button onclick="recusarPagamento(${c.id})" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
+                            <button onclick="recusarPagamento('${c.id}')" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
                                 Recusar
                             </button>
-                            <button onclick="confirmarPagamento(${c.id})" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
+                            <button onclick="confirmarPagamento('${c.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                 Confirmar pagamento
                             </button>
                         </div>
