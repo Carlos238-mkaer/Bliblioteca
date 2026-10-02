@@ -53,6 +53,59 @@
         .serif-font {
             font-family: 'Playfair Display', serif;
         }
+
+        /* ===== Tema Escuro ===== */
+        body.tema-escuro {
+            background-color: #17191a;
+            color: #e8e6e3;
+        }
+        body.tema-escuro header,
+        body.tema-escuro nav,
+        body.tema-escuro footer,
+        body.tema-escuro .bg-cream-50,
+        body.tema-escuro .bg-cream-100,
+        body.tema-escuro .bg-white,
+        body.tema-escuro .bg-cream-100\/60 {
+            background-color: #232627 !important;
+        }
+        body.tema-escuro .border-cream-200,
+        body.tema-escuro .border-sage-200,
+        body.tema-escuro .border-sage-200\/50,
+        body.tema-escuro .border-sage-200\/60,
+        body.tema-escuro .divide-cream-200 {
+            border-color: #35393a !important;
+        }
+        body.tema-escuro .text-warmgray-800,
+        body.tema-escuro .text-warmgray-700 {
+            color: #e8e6e3 !important;
+        }
+        body.tema-escuro .text-gray-500,
+        body.tema-escuro .text-gray-400 {
+            color: #9aa0a3 !important;
+        }
+        body.tema-escuro .bg-sage-50,
+        body.tema-escuro .bg-sage-100,
+        body.tema-escuro .bg-sage-100\/90 {
+            background-color: #243126 !important;
+        }
+        body.tema-escuro .text-sage-800,
+        body.tema-escuro .text-sage-600 {
+            color: #8fc49a !important;
+        }
+        body.tema-escuro input,
+        body.tema-escuro textarea,
+        body.tema-escuro select {
+            background-color: #2b2f30 !important;
+            color: #e8e6e3 !important;
+            border-color: #3a3f40 !important;
+        }
+        body.tema-escuro input::placeholder,
+        body.tema-escuro textarea::placeholder {
+            color: #8a8f91 !important;
+        }
+        body.tema-escuro .bg-gradient-to-r.from-sage-100 {
+            background-image: linear-gradient(to right, #243126, #232627, #243126) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-sage-200">
@@ -74,6 +127,9 @@
 
             <!-- Botões de Acesso / Contas -->
             <div class="flex items-center space-x-3">
+                <button onclick="toggleTema()" class="text-xs font-medium text-warmgray-700 hover:text-sage-600 transition p-1.5 border border-cream-200 rounded-full bg-white">
+                    <i data-lucide="moon" id="iconeTema" class="w-3.5 h-3.5"></i>
+                </button>
                 <button onclick="openModal('cartModal')" class="relative text-xs font-medium text-warmgray-700 hover:text-sage-600 transition px-3 py-1.5 border border-cream-200 rounded-full bg-white flex items-center gap-1.5">
                     <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                     <span>Carrinho</span>
@@ -623,6 +679,21 @@
             carregarLivros(); carregarDestaque(); carregarExclusivo();
         }
 
+        function toggleTema() {
+            const escuroAgora = document.body.classList.toggle('tema-escuro');
+            localStorage.setItem('tema', escuroAgora ? 'escuro' : 'claro');
+            document.getElementById('iconeTema').setAttribute('data-lucide', escuroAgora ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+
+        function aplicarTemaSalvo() {
+            const salvo = localStorage.getItem('tema');
+            if (salvo === 'escuro') {
+                document.body.classList.add('tema-escuro');
+                document.getElementById('iconeTema').setAttribute('data-lucide', 'sun');
+            }
+        }
+
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function switchModal(fromId, toId) { closeModal(fromId); openModal(toId); }
@@ -915,6 +986,23 @@
         }
 
         // ---------- Catálogo de Livros (Supabase) ----------
+        // Guarda o nome de cada coleção pelo seu id visual, para não precisar
+        // colocar o nome (que pode ter aspas) dentro de um atributo onclick
+        let colecaoNomesPorId = {};
+
+        function toggleColecao(idSufixo) {
+            const grid = document.getElementById(`grid-${idSufixo}`);
+            const seta = document.getElementById(`seta-${idSufixo}`);
+            const nomeColecao = colecaoNomesPorId[idSufixo];
+
+            const vaiEsconder = !grid.classList.contains('hidden');
+            grid.classList.toggle('hidden');
+            localStorage.setItem('colecao_oculta::' + nomeColecao, vaiEsconder ? 'true' : 'false');
+
+            seta.setAttribute('data-lucide', vaiEsconder ? 'chevron-right' : 'chevron-down');
+            lucide.createIcons();
+        }
+
         function construirCardLivroHtml(livro) {
             const possuiLivro = clienteComprouLivro(livro.id);
             const pendente = !possuiLivro && clientePossuiPendente(livro.id);
@@ -1004,15 +1092,22 @@
 
                 const gridClasses = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5';
                 let html = '';
+                let colecaoIndex = 0;
+                colecaoNomesPorId = {};
 
                 colecoes.forEach((livrosDaColecao, nomeColecao) => {
+                    const idSufixo = 'colecao-' + (colecaoIndex++);
+                    colecaoNomesPorId[idSufixo] = nomeColecao;
+                    const oculta = localStorage.getItem('colecao_oculta::' + nomeColecao) === 'true';
+
                     html += `
                         <div class="mb-10">
-                            <div class="flex items-center gap-2 mb-4">
+                            <button onclick="toggleColecao('${idSufixo}')" class="flex items-center gap-2 mb-4 group">
+                                <i data-lucide="${oculta ? 'chevron-right' : 'chevron-down'}" id="seta-${idSufixo}" class="w-4 h-4 text-sage-500 transition-transform"></i>
                                 <i data-lucide="library" class="w-4 h-4 text-sage-500"></i>
-                                <h3 class="serif-font text-lg font-medium text-warmgray-800">${escapeHtml(nomeColecao)}</h3>
-                            </div>
-                            <div class="${gridClasses}">
+                                <h3 class="serif-font text-lg font-medium text-warmgray-800 group-hover:text-sage-600 transition">${escapeHtml(nomeColecao)}</h3>
+                            </button>
+                            <div id="grid-${idSufixo}" class="${gridClasses}${oculta ? ' hidden' : ''}">
                                 ${livrosDaColecao.map(construirCardLivroHtml).join('')}
                             </div>
                         </div>
@@ -1264,6 +1359,7 @@
 
         // ---------- Inicialização ----------
         async function iniciar() {
+            aplicarTemaSalvo();
             atualizarUISessao();
             renderCart();
             carregarAvaliacoes();
