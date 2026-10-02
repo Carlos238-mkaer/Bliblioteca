@@ -468,8 +468,9 @@
                             ${partes.length > 0 ? `
                             <div class="mt-3 pt-3 border-t border-cream-100 space-y-1.5">
                                 ${partes.map(p => `
-                                    <div class="text-[11px] bg-cream-50 px-2.5 py-1.5 rounded-lg">
-                                        Parte ${p.numero_parte}${(p.capitulo_inicio && p.capitulo_fim) ? ` · cap. ${p.capitulo_inicio}-${p.capitulo_fim}` : ''}
+                                    <div class="flex items-center justify-between text-[11px] bg-cream-50 px-2.5 py-1.5 rounded-lg">
+                                        <span>Parte ${p.numero_parte}${(p.capitulo_inicio && p.capitulo_fim) ? ` · cap. ${p.capitulo_inicio}-${p.capitulo_fim}` : ''}</span>
+                                        <button onclick="deletarParte('${p.id}')" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
                                     </div>
                                 `).join('')}
                             </div>` : `<p class="mt-3 pt-3 border-t border-cream-100 text-[11px] text-gray-400">Nenhuma parte cadastrada ainda</p>`}
@@ -500,6 +501,24 @@
 
         function toggleEditForm(livroId) {
             document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function deletarParte(parteId) {
+            if (!confirm('Excluir essa parte? Quem já comprou vai perder acesso a ela.')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('partes_livro')
+                    .delete()
+                    .eq('id', parteId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao excluir parte');
+            }
         }
 
         async function deletarLivro(livroId) {
