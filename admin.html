@@ -149,6 +149,10 @@
         // Troque esta senha por uma só sua antes de publicar.
         const ADMIN_PASSWORD = "troque-esta-senha";
 
+        // Guarda os livros carregados, para buscar dados (como o título) sem precisar
+        // colocar texto livre dentro de atributos onclick (o que pode quebrar com aspas)
+        let livrosAdminCache = [];
+
         function handleAuth(e) {
             e.preventDefault();
             const senha = document.getElementById('authPassword').value;
@@ -397,6 +401,8 @@
 
                 if (error) throw error;
 
+                livrosAdminCache = livros || [];
+
                 if (!livros || livros.length === 0) {
                     container.innerHTML = '<p class="text-xs text-gray-400 text-center">Nenhum livro cadastrado ainda</p>';
                     return;
@@ -434,7 +440,7 @@
                                 <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                     + Adicionar parte
                                 </button>
-                                <button onclick="deletarLivro('${livro.id}', '${escapeHtml(livro.titulo).replace(/'/g, "\\'")}')" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
+                                <button onclick="deletarLivro('${livro.id}')" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
                                     Excluir
                                 </button>
                             </div>
@@ -496,7 +502,10 @@
             document.getElementById(`editForm-${livroId}`).classList.toggle('hidden');
         }
 
-        async function deletarLivro(livroId, titulo) {
+        async function deletarLivro(livroId) {
+            const livro = livrosAdminCache.find(l => l.id === livroId);
+            const titulo = livro ? livro.titulo : 'este livro';
+
             const confirmacao = prompt(`Para excluir "${titulo}" de vez (junto com todas as partes dele), digite EXCLUIR:`);
             if (confirmacao !== 'EXCLUIR') return;
 
