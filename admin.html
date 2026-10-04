@@ -120,6 +120,12 @@
                         <input type="text" id="bookColecao" placeholder="Coleção/Saga (opcional, ex: Trilogia do Reino)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <input type="number" id="bookPreco" required step="0.01" min="0.01" placeholder="Preço do livro (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <div>
+                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Prévia do livro (opcional — PDF com as primeiras páginas, fica público)</label>
+                            <input type="file" id="bookPreviaArquivo" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
+                            <input type="url" id="bookPreviaUrl" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        </div>
+                        <div>
                             <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
                             <input type="file" id="bookCapa" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
                             <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
@@ -360,6 +366,8 @@
             const preco = parseFloat(document.getElementById('bookPreco').value);
             const capa = document.getElementById('bookCapa').files[0];
             const capaUrl = document.getElementById('bookCapaUrl').value;
+            const previaArquivo = document.getElementById('bookPreviaArquivo').files[0];
+            const previaUrl = document.getElementById('bookPreviaUrl').value;
 
             if (!capa && !capaUrl) {
                 alert('Envie uma imagem de capa ou cole o link de uma imagem');
@@ -372,10 +380,11 @@
 
             try {
                 const urlFinal = await resolverUrlCapa(capa, capaUrl);
+                const urlPreviaFinal = (previaArquivo || previaUrl) ? await resolverUrlCapa(previaArquivo, previaUrl) : null;
 
                 const { error: insertError } = await supabaseClient
                     .from('livros')
-                    .insert([{ titulo, autor, genero, colecao: colecao || null, preco, capa_url: urlFinal }]);
+                    .insert([{ titulo, autor, genero, colecao: colecao || null, preco, capa_url: urlFinal, previa_url: urlPreviaFinal }]);
 
                 if (insertError) throw insertError;
 
@@ -437,6 +446,9 @@
                                 <button onclick="toggleTrocarCapaForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
                                     Trocar capa
                                 </button>
+                                <button onclick="togglePreviaForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
+                                    ${livro.previa_url ? 'Trocar prévia' : '+ Prévia'}
+                                </button>
                                 <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
                                     + Adicionar parte
                                 </button>
@@ -462,6 +474,15 @@
                                 <input type="url" id="novaCapaUrl-${livro.id}" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
                                 <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
                                     Salvar nova capa
+                                </button>
+                            </form>
+
+                            <form id="previaForm-${livro.id}" onsubmit="handlePrevia(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
+                                <input type="file" id="previaArquivo-${livro.id}" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                <p class="text-[11px] text-gray-400 text-center">— ou —</p>
+                                <input type="url" id="previaUrlInput-${livro.id}" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                    Salvar prévia
                                 </button>
                             </form>
 
@@ -572,6 +593,44 @@
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Erro ao atualizar destaque');
+            }
+        }
+
+        function togglePreviaForm(livroId) {
+            document.getElementById(`previaForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        async function handlePrevia(e, livroId) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const arquivo = document.getElementById(`previaArquivo-${livroId}`).files[0];
+            const url = document.getElementById(`previaUrlInput-${livroId}`).value;
+
+            if (!arquivo && !url) {
+                alert('Envie um arquivo ou cole o link de um arquivo');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const novaUrl = await resolverUrlCapa(arquivo, url);
+
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .update({ previa_url: novaUrl })
+                    .eq('id', livroId);
+
+                if (error) throw error;
+
+                carregarLivrosAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao salvar a prévia');
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
             }
         }
 
