@@ -425,67 +425,86 @@
 
                     return `
                         <div class="bg-white rounded-xl border ${ehExclusivo ? 'border-amber-400 ring-1 ring-amber-200' : (emDestaque ? 'border-emerald-400 ring-1 ring-emerald-200' : 'border-cream-200')} p-4 shadow-2xs">
-                            <div class="flex items-center gap-3 flex-wrap">
-                                <img src="${livro.capa_url || ''}" class="w-12 h-16 object-cover rounded bg-cream-100">
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-warmgray-800">${escapeHtml(livro.titulo)} ${ehExclusivo ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">EXCLUSIVO</span>' : ''} ${emDestaque ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">EM DESTAQUE</span>' : ''}</p>
-                                    <p class="text-xs text-gray-500">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}${livro.colecao ? ` · <span class="text-sage-600">${escapeHtml(livro.colecao)}</span>` : ''}</p>
+
+                            <!-- Cabeçalho: só o essencial -->
+                            <div class="flex items-start gap-3">
+                                <img src="${livro.capa_url || ''}" class="w-14 h-20 object-cover rounded-lg bg-cream-100 flex-shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-warmgray-800 leading-snug">${escapeHtml(livro.titulo)}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">${escapeHtml(livro.autor)} · R$ ${Number(livro.preco).toFixed(2)}</p>
+                                    ${livro.colecao ? `<p class="text-[11px] text-sage-600 mt-0.5">${escapeHtml(livro.colecao)}</p>` : ''}
+                                    <div class="flex gap-1 mt-1.5 flex-wrap">
+                                        ${ehExclusivo ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">EXCLUSIVO</span>' : ''}
+                                        ${emDestaque ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">DESTAQUE</span>' : ''}
+                                    </div>
                                 </div>
-                                <button onclick="toggleExclusivo('${livro.id}', ${ehExclusivo})" class="text-xs ${ehExclusivo ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
-                                    ${ehExclusivo ? '👑 Exclusivo' : '👑 Marcar Exclusivo'}
-                                </button>
-                                <button onclick="toggleDestaque('${livro.id}', ${emDestaque})" class="text-xs ${emDestaque ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
-                                    ${emDestaque ? '★ Em destaque' : '☆ Destacar'}
-                                </button>
-                                <button onclick="toggleExclusivo('${livro.id}', ${!!livro.exclusivo})" class="text-xs ${livro.exclusivo ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
-                                    ${livro.exclusivo ? '♛ Exclusivo' : '♛ Marcar Exclusivo'}
-                                </button>
-                                <button onclick="toggleEditForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
-                                    Editar
-                                </button>
-                                <button onclick="toggleTrocarCapaForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
-                                    Trocar capa
-                                </button>
-                                <button onclick="togglePreviaForm('${livro.id}')" class="text-xs bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
-                                    ${livro.previa_url ? 'Trocar prévia' : '+ Prévia'}
-                                </button>
-                                <button onclick="toggleParteForm('${livro.id}')" class="text-xs bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
-                                    + Adicionar parte
-                                </button>
-                                <button onclick="deletarLivro('${livro.id}')" class="text-xs bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg transition">
-                                    Excluir
-                                </button>
+                                <div class="flex flex-col gap-1.5 flex-shrink-0">
+                                    <button onclick="toggleParteForm('${livro.id}')" class="text-[11px] whitespace-nowrap bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">
+                                        + Parte
+                                    </button>
+                                    <button onclick="toggleGerenciar('${livro.id}')" class="text-[11px] whitespace-nowrap bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">
+                                        ⚙ Gerenciar
+                                    </button>
+                                </div>
                             </div>
 
-                            <form id="editForm-${livro.id}" onsubmit="handleEditBook(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
-                                <input type="text" id="editTitulo-${livro.id}" required value="${escapeHtml(livro.titulo)}" placeholder="Título" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <input type="text" id="editAutor-${livro.id}" required value="${escapeHtml(livro.autor)}" placeholder="Autor" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <input type="text" id="editGenero-${livro.id}" value="${escapeHtml(livro.genero || '')}" placeholder="Género" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <input type="text" id="editColecao-${livro.id}" value="${escapeHtml(livro.colecao || '')}" placeholder="Coleção/Saga (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <input type="number" id="editPreco-${livro.id}" required step="0.01" min="0.01" value="${livro.preco}" placeholder="Preço" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
-                                    Salvar alterações
-                                </button>
-                            </form>
+                            <!-- Painel "Gerenciar": tudo que é usado com menos frequência -->
+                            <div id="gerenciar-${livro.id}" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-3">
+                                <div class="flex gap-2 flex-wrap">
+                                    <button onclick="toggleExclusivo('${livro.id}', ${ehExclusivo})" class="text-xs ${ehExclusivo ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-cream-50 hover:bg-cream-100 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
+                                        ${ehExclusivo ? '👑 Exclusivo' : '👑 Marcar Exclusivo'}
+                                    </button>
+                                    <button onclick="toggleDestaque('${livro.id}', ${emDestaque})" class="text-xs ${emDestaque ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-cream-50 hover:bg-cream-100 text-warmgray-800'} px-3 py-1.5 rounded-lg transition">
+                                        ${emDestaque ? '★ Em destaque' : '☆ Destacar'}
+                                    </button>
+                                </div>
 
-                            <form id="trocarCapaForm-${livro.id}" onsubmit="handleTrocarCapa(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
-                                <input type="file" id="novaCapaArquivo-${livro.id}" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
-                                <p class="text-[11px] text-gray-400 text-center">— ou —</p>
-                                <input type="url" id="novaCapaUrl-${livro.id}" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
-                                    Salvar nova capa
-                                </button>
-                            </form>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <button onclick="toggleEditForm('${livro.id}')" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 py-2 rounded-lg transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="toggleTrocarCapaForm('${livro.id}')" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 py-2 rounded-lg transition">
+                                        Trocar capa
+                                    </button>
+                                    <button onclick="togglePreviaForm('${livro.id}')" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 py-2 rounded-lg transition">
+                                        ${livro.previa_url ? 'Trocar prévia' : '+ Prévia'}
+                                    </button>
+                                    <button onclick="deletarLivro('${livro.id}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition">
+                                        Excluir livro
+                                    </button>
+                                </div>
 
-                            <form id="previaForm-${livro.id}" onsubmit="handlePrevia(event, '${livro.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
-                                <input type="file" id="previaArquivo-${livro.id}" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
-                                <p class="text-[11px] text-gray-400 text-center">— ou —</p>
-                                <input type="url" id="previaUrlInput-${livro.id}" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
-                                <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
-                                    Salvar prévia
-                                </button>
-                            </form>
+                                <form id="editForm-${livro.id}" onsubmit="handleEditBook(event, '${livro.id}')" class="hidden space-y-2 pt-1">
+                                    <input type="text" id="editTitulo-${livro.id}" required value="${escapeHtml(livro.titulo)}" placeholder="Título" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="text" id="editAutor-${livro.id}" required value="${escapeHtml(livro.autor)}" placeholder="Autor" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="text" id="editGenero-${livro.id}" value="${escapeHtml(livro.genero || '')}" placeholder="Género" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="text" id="editColecao-${livro.id}" value="${escapeHtml(livro.colecao || '')}" placeholder="Coleção/Saga (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <input type="number" id="editPreco-${livro.id}" required step="0.01" min="0.01" value="${livro.preco}" placeholder="Preço" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                        Salvar alterações
+                                    </button>
+                                </form>
 
+                                <form id="trocarCapaForm-${livro.id}" onsubmit="handleTrocarCapa(event, '${livro.id}')" class="hidden space-y-2 pt-1">
+                                    <input type="file" id="novaCapaArquivo-${livro.id}" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                    <p class="text-[11px] text-gray-400 text-center">— ou —</p>
+                                    <input type="url" id="novaCapaUrl-${livro.id}" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                        Salvar nova capa
+                                    </button>
+                                </form>
+
+                                <form id="previaForm-${livro.id}" onsubmit="handlePrevia(event, '${livro.id}')" class="hidden space-y-2 pt-1">
+                                    <input type="file" id="previaArquivo-${livro.id}" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                    <p class="text-[11px] text-gray-400 text-center">— ou —</p>
+                                    <input type="url" id="previaUrlInput-${livro.id}" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                        Salvar prévia
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Partes: sempre visível, é o que mais se mexe -->
                             ${partes.length > 0 ? `
                             <div class="mt-3 pt-3 border-t border-cream-100 space-y-1.5">
                                 ${partes.map(p => `
@@ -518,6 +537,10 @@
 
         function toggleParteForm(livroId) {
             document.getElementById(`parteForm-${livroId}`).classList.toggle('hidden');
+        }
+
+        function toggleGerenciar(livroId) {
+            document.getElementById(`gerenciar-${livroId}`).classList.toggle('hidden');
         }
 
         function toggleEditForm(livroId) {
