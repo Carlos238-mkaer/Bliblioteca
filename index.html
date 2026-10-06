@@ -387,12 +387,12 @@
                     </div>
                 </div>
 
-                <form onsubmit="handleContactSubmit(event)" class="space-y-3 bg-cream-50 p-5 rounded-xl border border-cream-200">
+                <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-3 bg-cream-50 p-5 rounded-xl border border-cream-200">
                     <h3 class="text-xs font-semibold text-warmgray-800">Enviar Mensagem ao Suporte</h3>
-                    <input type="text" required placeholder="O Seu Nome" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white">
-                    <input type="email" required placeholder="O Seu E-mail" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white">
-                    <textarea rows="3" required placeholder="Descreva aqui o problema ou sugestão..." class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white"></textarea>
-                    <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
+                    <input type="text" id="contactNome" required placeholder="O Seu Nome" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white">
+                    <input type="email" id="contactEmail" required placeholder="O Seu E-mail" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white">
+                    <textarea id="contactMensagem" rows="3" required placeholder="Descreva aqui o problema ou sugestão..." class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none bg-white"></textarea>
+                    <button type="submit" id="contactBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition shadow-xs">
                         Enviar Mensagem
                     </button>
                 </form>
@@ -589,6 +589,30 @@
         <span id="notificationMessage">Ação realizada com sucesso!</span>
     </div>
 
+    <!-- Bot de Assistência -->
+    <button onclick="toggleChatBot()" id="chatBotBtn" class="fixed bottom-5 left-5 z-50 bg-sage-500 hover:bg-sage-600 text-white rounded-full p-3.5 shadow-lg transition">
+        <i data-lucide="message-circle" class="w-5 h-5"></i>
+    </button>
+
+    <div id="chatBotPanel" class="hidden fixed bottom-20 left-5 z-50 w-80 max-w-[calc(100vw-2.5rem)] bg-white rounded-2xl border border-cream-200 shadow-xl flex flex-col" style="height: 420px;">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-cream-100 bg-sage-50 rounded-t-2xl flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <i data-lucide="bot" class="w-4 h-4 text-sage-600"></i>
+                <span class="text-sm font-medium text-warmgray-800">Assistente</span>
+            </div>
+            <button onclick="toggleChatBot()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="chatBotMensagens" class="flex-1 overflow-y-auto p-3 space-y-2 text-xs"></div>
+        <form onsubmit="enviarMensagemChatBot(event)" class="flex items-center gap-2 p-3 border-t border-cream-100 flex-shrink-0">
+            <input type="text" id="chatBotInput" placeholder="Digite sua dúvida..." class="flex-1 text-xs p-2 rounded-lg border border-cream-200 outline-none">
+            <button type="submit" class="bg-sage-500 hover:bg-sage-600 text-white p-2 rounded-lg transition flex-shrink-0">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </button>
+        </form>
+    </div>
+
     <!-- Cliente Supabase (precisa vir ANTES do script principal abaixo) -->
     <script src="supabase.js"></script>
 
@@ -699,6 +723,85 @@
             document.getElementById('categoriesArrow').classList.remove('rotate-180');
             filtroCategoriaAtual = categoryName;
             carregarLivros(); carregarDestaque(); carregarExclusivo();
+        }
+
+        // ---------- Bot de Assistência (respostas prontas) ----------
+        let chatBotAberto = false;
+        let chatBotIniciado = false;
+
+        function toggleChatBot() {
+            chatBotAberto = !chatBotAberto;
+            document.getElementById('chatBotPanel').classList.toggle('hidden', !chatBotAberto);
+            if (chatBotAberto && !chatBotIniciado) {
+                adicionarMensagemBot('Olá! 👋 Sou o assistente da Biblioteca Digital. Posso ajudar com dúvidas sobre pagamento (Pix), acesso aos livros, carrinho, conta ou coleções. O que você quer saber?');
+                chatBotIniciado = true;
+            }
+        }
+
+        function adicionarMensagemBot(texto) {
+            const box = document.getElementById('chatBotMensagens');
+            const bolha = document.createElement('div');
+            bolha.className = 'bg-sage-50 text-warmgray-800 rounded-lg rounded-tl-none px-3 py-2 max-w-[85%] leading-relaxed';
+            bolha.textContent = texto;
+            box.appendChild(bolha);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function adicionarMensagemUsuario(texto) {
+            const box = document.getElementById('chatBotMensagens');
+            const bolha = document.createElement('div');
+            bolha.className = 'bg-warmgray-800 text-white rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] ml-auto leading-relaxed';
+            bolha.textContent = texto;
+            box.appendChild(bolha);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function responderChatBot(pergunta) {
+            const p = pergunta.toLowerCase();
+
+            if (p.includes('pix') || p.includes('pagamento') || p.includes('pagar')) {
+                return 'O pagamento é feito via Pix: ao finalizar a compra, aparece um QR Code (ou código "Copia e Cola"). A confirmação é manual e pode levar algumas horas — você será avisado quando o livro for liberado.';
+            }
+            if (p.includes('ler') || p.includes('acesso') || p.includes('baixar') || p.includes('download')) {
+                return 'Depois que a compra é confirmada, o livro aparece com o botão "Ler agora" no catálogo, liberando todas as partes disponíveis — inclusive as futuras, sem cobrar de novo.';
+            }
+            if (p.includes('prévia') || p.includes('previa') || p.includes('amostra')) {
+                return 'Alguns livros têm um botão "👁 Ler prévia" no card — isso é gratuito, não precisa comprar pra ver.';
+            }
+            if (p.includes('carrinho')) {
+                return 'Você pode adicionar vários livros ao carrinho e pagar tudo de uma vez. O ícone do carrinho fica no topo do site.';
+            }
+            if (p.includes('conta') || p.includes('login') || p.includes('cadastr') || p.includes('registr') || p.includes('sessão') || p.includes('sessao')) {
+                return 'Pra comprar ou avaliar livros, é preciso ter uma conta — use os botões "Iniciar Sessão" ou "Registar" no topo do site.';
+            }
+            if (p.includes('coleç') || p.includes('colec') || p.includes('saga')) {
+                return 'Livros relacionados aparecem agrupados em "coleções" no catálogo — clique no título da coleção pra esconder ou mostrar ela.';
+            }
+            if (p.includes('preço') || p.includes('preco') || p.includes('valor') || p.includes('custa')) {
+                return 'O preço de cada livro aparece direto no card dele, no catálogo.';
+            }
+            if (p.includes('cancel') || p.includes('reembolso') || p.includes('estorno')) {
+                return 'Pra cancelamentos ou reembolsos, fale direto com o suporte pelo formulário "Enviar Mensagem ao Suporte" ou pelo e-mail/Instagram no rodapé.';
+            }
+            if (p.includes('oi') || p.includes('olá') || p.includes('ola') || p.includes('bom dia') || p.includes('boa tarde') || p.includes('boa noite')) {
+                return 'Olá! Como posso ajudar? Pode perguntar sobre pagamento, acesso aos livros, carrinho ou conta.';
+            }
+
+            return 'Ainda não sei responder isso 🙏 Usa o formulário "Enviar Mensagem ao Suporte" lá embaixo na página, ou fala com a gente pelo Instagram no rodapé, que te ajudamos certinho.';
+        }
+
+        function enviarMensagemChatBot(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatBotInput');
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            adicionarMensagemUsuario(texto);
+            input.value = '';
+
+            setTimeout(() => {
+                adicionarMensagemBot(responderChatBot(texto));
+            }, 400);
         }
 
         function toggleTema() {
@@ -1387,10 +1490,34 @@
             }
         }
 
-        function handleContactSubmit(e) {
+        async function handleContactSubmit(e) {
             e.preventDefault();
-            e.target.reset();
-            showNotification('Mensagem enviada com sucesso ao suporte!');
+            const btn = document.getElementById('contactBtn');
+            const nome = document.getElementById('contactNome').value;
+            const email = document.getElementById('contactEmail').value;
+            const mensagem = document.getElementById('contactMensagem').value;
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const resp = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, mensagem }),
+                });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro);
+
+                document.getElementById('contactForm').reset();
+                showNotification('Mensagem enviada com sucesso ao suporte!');
+            } catch (err) {
+                showNotification(err.message || 'Erro ao enviar mensagem');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
         }
 
         // ---------- Inicialização ----------
