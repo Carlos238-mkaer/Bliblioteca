@@ -65,6 +65,7 @@
             <button onclick="mudarAba('pendentes')" id="tabBtn-pendentes" class="tab-btn px-4 py-2 rounded-full font-medium bg-sage-500 text-white transition">Pagamentos Pendentes</button>
             <button onclick="mudarAba('compras')" id="tabBtn-compras" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Todas as Compras</button>
             <button onclick="mudarAba('avaliacoes')" id="tabBtn-avaliacoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Avaliações</button>
+            <button onclick="mudarAba('feedbacks')" id="tabBtn-feedbacks" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Feedbacks</button>
             <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
         </nav>
 
@@ -106,6 +107,14 @@
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Avaliações dos leitores</h2>
                 <div id="avaliacoesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <p class="text-xs text-gray-400 col-span-2 text-center">A carregar...</p>
+                </div>
+            </section>
+
+            <!-- Aba: Feedbacks -->
+            <section id="aba-feedbacks" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Feedbacks do site</h2>
+                <div id="feedbacksList" class="space-y-3">
+                    <p class="text-xs text-gray-400 text-center">A carregar...</p>
                 </div>
             </section>
 
@@ -168,6 +177,7 @@
                 carregarPendentes();
                 carregarCompras();
                 carregarAvaliacoesAdmin();
+                carregarFeedbacks();
                 carregarLivrosAdmin();
             } else {
                 document.getElementById('authError').classList.remove('hidden');
@@ -326,6 +336,34 @@
             } catch (err) {
                 console.error(err);
                 list.innerHTML = '<p class="text-xs text-red-500 col-span-2 text-center">Erro ao carregar avaliações</p>';
+            }
+        }
+
+        // ---------- Feedbacks do site ----------
+        async function carregarFeedbacks() {
+            const list = document.getElementById('feedbacksList');
+            try {
+                const resp = await fetch('/api/feedback');
+                const feedbacks = await resp.json();
+
+                if (!feedbacks || feedbacks.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Nenhum feedback recebido ainda</p>';
+                    return;
+                }
+
+                list.innerHTML = feedbacks.map(f => `
+                    <div class="bg-white rounded-xl border border-cream-200 p-4 shadow-2xs">
+                        <div class="flex items-center justify-between flex-wrap gap-1">
+                            <span class="text-sm font-medium text-warmgray-800">${escapeHtml(f.nome)}</span>
+                            <span class="text-[11px] text-gray-400">${new Date(f.criado_em).toLocaleString('pt-PT')}</span>
+                        </div>
+                        <a href="mailto:${escapeHtml(f.email)}" class="text-xs text-sage-600 hover:underline">${escapeHtml(f.email)}</a>
+                        <p class="text-xs text-warmgray-700 mt-2 leading-relaxed">${escapeHtml(f.mensagem)}</p>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar feedbacks</p>';
             }
         }
 
