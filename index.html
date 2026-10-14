@@ -12,27 +12,93 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <!-- Gerador de QR Code (para o Pix) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Cores padrão do site (o admin pode sobrescrever estas variáveis) */
+        :root {
+            --sage-50: 244 247 244;
+            --sage-100: 227 235 227;
+            --sage-200: 199 215 199;
+            --sage-500: 122 158 126;
+            --sage-600: 92 127 96;
+            --sage-800: 56 77 59;
+            --cream-50: 253 251 247;
+            --cream-100: 247 243 235;
+            --cream-200: 238 229 216;
+            --warmgray-700: 74 72 70;
+            --warmgray-800: 45 43 42;
+        }
+    </style>
+    <script>
+        // ---------- Paleta editável (gerada a partir de 3 cores escolhidas no admin) ----------
+        function hexParaRgb(hex) {
+            hex = String(hex || '').replace('#', '');
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const n = parseInt(hex, 16);
+            if (isNaN(n) || hex.length !== 6) return null;
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+        }
+        function misturarCores(a, b, p) {
+            return a.map((v, i) => Math.round(v * (1 - p) + b[i] * p));
+        }
+        function gerarPaleta(cfg) {
+            const BRANCO = [255, 255, 255], PRETO = [0, 0, 0];
+            const v = {};
+            const principal = hexParaRgb(cfg.cor_principal);
+            const fundo = hexParaRgb(cfg.cor_fundo);
+            const texto = hexParaRgb(cfg.cor_texto);
+            if (principal) {
+                v['--sage-50'] = misturarCores(principal, BRANCO, 0.90);
+                v['--sage-100'] = misturarCores(principal, BRANCO, 0.80);
+                v['--sage-200'] = misturarCores(principal, BRANCO, 0.58);
+                v['--sage-500'] = principal;
+                v['--sage-600'] = misturarCores(principal, PRETO, 0.25);
+                v['--sage-800'] = misturarCores(principal, PRETO, 0.54);
+            }
+            if (fundo) {
+                v['--cream-50'] = fundo;
+                const QUENTE = [178, 141, 92];
+                v['--cream-100'] = misturarCores(fundo, QUENTE, 0.08);
+                v['--cream-200'] = misturarCores(fundo, QUENTE, 0.20);
+            }
+            if (texto) {
+                v['--warmgray-800'] = texto;
+                v['--warmgray-700'] = misturarCores(texto, BRANCO, 0.12);
+            }
+            return v;
+        }
+        const VARIAVEIS_PALETA = ['--sage-50', '--sage-100', '--sage-200', '--sage-500', '--sage-600', '--sage-800', '--cream-50', '--cream-100', '--cream-200', '--warmgray-700', '--warmgray-800'];
+        function aplicarPaleta(cfg) {
+            const raiz = document.documentElement;
+            const nova = gerarPaleta(cfg || {});
+            VARIAVEIS_PALETA.forEach(nome => {
+                if (nova[nome]) raiz.style.setProperty(nome, nova[nome].join(' '));
+                else raiz.style.removeProperty(nome);
+            });
+        }
+        // Aplica logo de cara a última configuração salva neste navegador (evita "piscar" as cores antigas)
+        try { aplicarPaleta(JSON.parse(localStorage.getItem('config_site') || '{}')); } catch (e) {}
+    </script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         sage: {
-                            50: '#f4f7f4',
-                            100: '#e3ebe3',
-                            200: '#c7d7c7',
-                            500: '#7a9e7e',
-                            600: '#5c7f60',
-                            800: '#384d3b',
+                            50: 'rgb(var(--sage-50) / <alpha-value>)',
+                            100: 'rgb(var(--sage-100) / <alpha-value>)',
+                            200: 'rgb(var(--sage-200) / <alpha-value>)',
+                            500: 'rgb(var(--sage-500) / <alpha-value>)',
+                            600: 'rgb(var(--sage-600) / <alpha-value>)',
+                            800: 'rgb(var(--sage-800) / <alpha-value>)',
                         },
                         cream: {
-                            50: '#fdfbf7',
-                            100: '#f7f3eb',
-                            200: '#eee5d8',
+                            50: 'rgb(var(--cream-50) / <alpha-value>)',
+                            100: 'rgb(var(--cream-100) / <alpha-value>)',
+                            200: 'rgb(var(--cream-200) / <alpha-value>)',
                         },
                         warmgray: {
-                            700: '#4a4846',
-                            800: '#2d2b2a',
+                            700: 'rgb(var(--warmgray-700) / <alpha-value>)',
+                            800: 'rgb(var(--warmgray-800) / <alpha-value>)',
                         }
                     },
                     fontFamily: {
@@ -47,8 +113,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fdfbf7;
-            color: #4a4846;
+            background-color: rgb(var(--cream-50));
+            color: rgb(var(--warmgray-700));
         }
         .serif-font {
             font-family: 'Playfair Display', serif;
@@ -156,7 +222,7 @@
                     <!-- Logótipo da Marca -->
                     <a href="#" class="flex items-center gap-2 pr-4 border-r border-sage-200 font-serif text-lg font-bold text-sage-800">
                         <i data-lucide="book-open" class="w-5 h-5 text-sage-600"></i>
-                        <span>Biblioteca Digital</span>
+                        <span data-cfg="nome_site">Biblioteca Digital</span>
                     </a>
 
                     <!-- Links (só aparecem em telas médias/grandes) -->
@@ -218,13 +284,13 @@
     <section class="py-12 md:py-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
         <div class="bg-gradient-to-r from-sage-100 via-cream-100 to-sage-50 rounded-3xl p-8 md:p-12 border border-sage-200/50 shadow-xs flex flex-col md:flex-row items-center justify-between gap-8">
             <div class="max-w-xl space-y-4">
-                <span class="inline-block bg-white/80 text-sage-600 font-medium text-xs px-3 py-1 rounded-full border border-sage-200/60 shadow-2xs">
+                <span data-cfg="hero_selo" class="inline-block bg-white/80 text-sage-600 font-medium text-xs px-3 py-1 rounded-full border border-sage-200/60 shadow-2xs">
                     Um refúgio para leitores e estudantes
                 </span>
-                <h1 class="serif-font text-3xl sm:text-4xl md:text-5xl font-semibold text-warmgray-800 leading-tight">
+                <h1 data-cfg="hero_titulo" class="serif-font text-3xl sm:text-4xl md:text-5xl font-semibold text-warmgray-800 leading-tight">
                     A sua biblioteca online simples e tranquila.
                 </h1>
-                <p class="text-sm md:text-base text-warmgray-700 font-light leading-relaxed">
+                <p data-cfg="hero_subtitulo" class="text-sm md:text-base text-warmgray-700 font-light leading-relaxed">
                     Explore um acervo digital sem ruídos ou distrações. Ambiente suave concebido para facilitar o acesso à leitura e partilha de opiniões.
                 </p>
                 <div class="pt-2 flex flex-wrap items-center gap-3">
@@ -404,7 +470,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2 font-serif text-base font-bold text-sage-800">
                 <i data-lucide="book-open" class="w-4 h-4 text-sage-600"></i>
-                <span>Biblioteca Digital</span>
+                <span data-cfg="nome_site">Biblioteca Digital</span>
             </div>
 
             <p class="text-center text-[11px] text-gray-500">
@@ -413,7 +479,7 @@
             </p>
 
             <p class="text-[11px] text-gray-500">
-                © 2026 Biblioteca Digital. Todos os direitos reservados.
+                © 2026 <span data-cfg="nome_site">Biblioteca Digital</span>. Todos os direitos reservados.
             </p>
         </div>
     </footer>
@@ -1521,7 +1587,43 @@
         }
 
         // ---------- Inicialização ----------
+        // ---------- Configuração do site (cores e textos editados no admin) ----------
+        function aplicarTextosConfig(cfg) {
+            document.querySelectorAll('[data-cfg]').forEach(el => {
+                if (el.dataset.padrao === undefined) el.dataset.padrao = el.textContent;
+                const valor = cfg[el.dataset.cfg];
+                el.textContent = (valor !== undefined && valor !== '') ? valor : el.dataset.padrao;
+            });
+            const nomePadrao = 'Biblioteca Digital';
+            document.title = `${cfg.nome_site || nomePadrao} - Plataforma de Leitura Online`;
+        }
+
+        function aplicarConfiguracoes(cfg) {
+            aplicarPaleta(cfg);
+            aplicarTextosConfig(cfg);
+        }
+
+        async function carregarConfiguracoes() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('configuracoes')
+                    .select('chave, valor');
+                if (error) throw error;
+
+                const cfg = {};
+                (data || []).forEach(linha => { cfg[linha.chave] = linha.valor; });
+
+                localStorage.setItem('config_site', JSON.stringify(cfg));
+                aplicarConfiguracoes(cfg);
+            } catch (err) {
+                // Se a tabela ainda não existe, o site segue com o visual padrão
+                console.warn('Configurações do site não carregadas:', err.message || err);
+            }
+        }
+
         async function iniciar() {
+            try { aplicarConfiguracoes(JSON.parse(localStorage.getItem('config_site') || '{}')); } catch (e) {}
+            carregarConfiguracoes();
             aplicarTemaSalvo();
             atualizarUISessao();
             renderCart();
