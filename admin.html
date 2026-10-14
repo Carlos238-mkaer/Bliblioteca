@@ -67,6 +67,7 @@
             <button onclick="mudarAba('avaliacoes')" id="tabBtn-avaliacoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Avaliações</button>
             <button onclick="mudarAba('feedbacks')" id="tabBtn-feedbacks" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Feedbacks</button>
             <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
+            <button onclick="mudarAba('aparencia')" id="tabBtn-aparencia" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Aparência</button>
         </nav>
 
         <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
@@ -140,15 +141,85 @@
                             <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
                             <input type="url" id="bookCapaUrl" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         </div>
-                        <button type="submit" id="addBookBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
-                            Adicionar Livro
-                        </button>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="limparFormLivro()" class="bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition">
+                                Limpar
+                            </button>
+                            <button type="submit" id="addBookBtn" class="flex-1 bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                                Adicionar Livro
+                            </button>
+                        </div>
                     </form>
                 </div>
 
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Livros cadastrados</h2>
                 <div id="livrosAdminList" class="space-y-4">
                     <p class="text-xs text-gray-400 text-center">A carregar...</p>
+                </div>
+            </section>
+
+            <!-- Aba: Aparência -->
+            <section id="aba-aparencia" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Aparência do site</h2>
+                <p class="text-xs text-warmgray-700 mb-5">Escolha as cores e os textos principais. Ao salvar, todos os visitantes passam a ver a mudança.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <form id="aparenciaForm" onsubmit="salvarAparencia(event)" class="bg-white rounded-2xl border border-cream-200 p-6 shadow-2xs space-y-5">
+                        <div>
+                            <h3 class="text-sm font-semibold text-warmgray-800 mb-3">Cores</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+                                    <span>Cor principal <span class="text-gray-400">(botões, destaques e tons de verde)</span></span>
+                                    <input type="color" id="cfgCorPrincipal" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+                                    <span>Cor de fundo <span class="text-gray-400">(fundo do site)</span></span>
+                                    <input type="color" id="cfgCorFundo" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+                                    <span>Cor do texto <span class="text-gray-400">(títulos e textos)</span></span>
+                                    <input type="color" id="cfgCorTexto" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sm font-semibold text-warmgray-800 mb-3">Textos</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Nome do site</label>
+                                    <input type="text" id="cfgNomeSite" oninput="atualizarPreviaAparencia()" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Selo do banner (frase pequena acima do título)</label>
+                                    <input type="text" id="cfgHeroSelo" oninput="atualizarPreviaAparencia()" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Título do banner</label>
+                                    <input type="text" id="cfgHeroTitulo" oninput="atualizarPreviaAparencia()" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-warmgray-700 mb-1">Subtítulo do banner</label>
+                                    <textarea id="cfgHeroSubtitulo" rows="3" oninput="atualizarPreviaAparencia()" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button type="button" onclick="restaurarAparencia()" class="bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition">
+                                Restaurar padrão
+                            </button>
+                            <button type="submit" id="salvarAparenciaBtn" class="flex-1 bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                                Salvar aparência
+                            </button>
+                        </div>
+                    </form>
+
+                    <div>
+                        <h3 class="text-sm font-semibold text-warmgray-800 mb-3">Prévia</h3>
+                        <div id="previaAparencia" class="rounded-2xl border border-cream-200 p-6 shadow-2xs"></div>
+                        <p class="text-[11px] text-gray-400 mt-2">A prévia mostra uma amostra aproximada. O site completo usa a mesma paleta, com tons mais claros e escuros gerados a partir da cor principal.</p>
+                    </div>
                 </div>
             </section>
         </main>
@@ -179,6 +250,7 @@
                 carregarAvaliacoesAdmin();
                 carregarFeedbacks();
                 carregarLivrosAdmin();
+                carregarAparencia();
             } else {
                 document.getElementById('authError').classList.remove('hidden');
             }
@@ -391,6 +463,142 @@
             }
 
             return null;
+        }
+
+        // ---------- Aparência do site ----------
+        // Estes padrões precisam ser iguais aos do index.html
+        const CFG_PADRAO = {
+            cor_principal: '#7a9e7e',
+            cor_fundo: '#fdfbf7',
+            cor_texto: '#2d2b2a',
+            nome_site: 'Biblioteca Digital',
+            hero_selo: 'Um refúgio para leitores e estudantes',
+            hero_titulo: 'A sua biblioteca online simples e tranquila.',
+            hero_subtitulo: 'Explore um acervo digital sem ruídos ou distrações. Ambiente suave concebido para facilitar o acesso à leitura e partilha de opiniões.'
+        };
+        const CFG_CAMPOS = {
+            cor_principal: 'cfgCorPrincipal',
+            cor_fundo: 'cfgCorFundo',
+            cor_texto: 'cfgCorTexto',
+            nome_site: 'cfgNomeSite',
+            hero_selo: 'cfgHeroSelo',
+            hero_titulo: 'cfgHeroTitulo',
+            hero_subtitulo: 'cfgHeroSubtitulo'
+        };
+
+        function hexParaRgbAdmin(hex) {
+            hex = String(hex || '').replace('#', '');
+            const n = parseInt(hex, 16);
+            if (isNaN(n) || hex.length !== 6) return [0, 0, 0];
+            return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+        }
+        function misturarAdmin(a, b, p) {
+            return a.map((v, i) => Math.round(v * (1 - p) + b[i] * p));
+        }
+        function rgbCss(c) { return `rgb(${c.join(',')})`; }
+
+        function lerCamposAparencia() {
+            const valores = {};
+            Object.entries(CFG_CAMPOS).forEach(([chave, idCampo]) => {
+                valores[chave] = document.getElementById(idCampo).value.trim();
+            });
+            return valores;
+        }
+
+        function atualizarPreviaAparencia() {
+            const v = lerCamposAparencia();
+            const BRANCO = [255, 255, 255], PRETO = [0, 0, 0];
+            const principal = hexParaRgbAdmin(v.cor_principal);
+            const fundo = hexParaRgbAdmin(v.cor_fundo);
+            const texto = hexParaRgbAdmin(v.cor_texto);
+
+            const previa = document.getElementById('previaAparencia');
+            previa.style.background = rgbCss(fundo);
+            previa.style.color = rgbCss(misturarAdmin(texto, BRANCO, 0.12));
+            previa.innerHTML = `
+                <p style="font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:${rgbCss(misturarAdmin(principal, PRETO, 0.54))};margin-bottom:14px;">${escapeHtml(v.nome_site || CFG_PADRAO.nome_site)}</p>
+                <div style="background:${rgbCss(misturarAdmin(principal, BRANCO, 0.80))};border-radius:14px;padding:18px;">
+                    <span style="display:inline-block;background:rgba(255,255,255,.8);color:${rgbCss(misturarAdmin(principal, PRETO, 0.25))};font-size:10px;padding:3px 10px;border-radius:999px;margin-bottom:10px;">${escapeHtml(v.hero_selo || CFG_PADRAO.hero_selo)}</span>
+                    <p style="font-family:'Playfair Display',serif;font-weight:600;font-size:20px;line-height:1.2;color:${rgbCss(texto)};margin-bottom:8px;">${escapeHtml(v.hero_titulo || CFG_PADRAO.hero_titulo)}</p>
+                    <p style="font-size:11px;line-height:1.5;margin-bottom:12px;">${escapeHtml(v.hero_subtitulo || CFG_PADRAO.hero_subtitulo)}</p>
+                    <span style="display:inline-block;background:${rgbCss(principal)};color:#fff;font-size:11px;font-weight:500;padding:7px 16px;border-radius:999px;">Ver Catálogo</span>
+                </div>
+            `;
+        }
+
+        async function carregarAparencia() {
+            let salvo = {};
+            try {
+                const { data, error } = await supabaseClient.from('configuracoes').select('chave, valor');
+                if (error) throw error;
+                (data || []).forEach(l => { salvo[l.chave] = l.valor; });
+            } catch (err) {
+                console.warn('Tabela configuracoes ainda não disponível:', err.message || err);
+            }
+
+            Object.entries(CFG_CAMPOS).forEach(([chave, idCampo]) => {
+                document.getElementById(idCampo).value = salvo[chave] ?? CFG_PADRAO[chave];
+            });
+            atualizarPreviaAparencia();
+        }
+
+        async function salvarAparencia(e) {
+            e.preventDefault();
+            const btn = document.getElementById('salvarAparenciaBtn');
+            const valores = lerCamposAparencia();
+
+            // Só guarda o que for diferente do padrão; o que voltou ao padrão é removido
+            const paraSalvar = [];
+            const paraRemover = [];
+            Object.entries(valores).forEach(([chave, valor]) => {
+                if (valor === '' || valor === CFG_PADRAO[chave]) paraRemover.push(chave);
+                else paraSalvar.push({ chave, valor });
+            });
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                if (paraSalvar.length > 0) {
+                    const { error } = await supabaseClient.from('configuracoes').upsert(paraSalvar, { onConflict: 'chave' });
+                    if (error) throw error;
+                }
+                if (paraRemover.length > 0) {
+                    const { error } = await supabaseClient.from('configuracoes').delete().in('chave', paraRemover);
+                    if (error) throw error;
+                }
+                alert('Aparência salva! Recarregue o site para ver a mudança.');
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao salvar a aparência');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        async function restaurarAparencia() {
+            if (!confirm('Voltar cores e textos ao padrão original do site?')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('configuracoes')
+                    .delete()
+                    .in('chave', Object.keys(CFG_CAMPOS));
+                if (error) throw error;
+
+                await carregarAparencia();
+                alert('Padrão restaurado!');
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao restaurar o padrão');
+            }
+        }
+
+        // ---------- Livros: limpar o formulário de cadastro ----------
+        function limparFormLivro() {
+            document.getElementById('addBookForm').reset();
         }
 
         // ---------- Livros: adicionar novo ----------
