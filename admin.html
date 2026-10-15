@@ -67,6 +67,7 @@
             <button onclick="mudarAba('avaliacoes')" id="tabBtn-avaliacoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Avaliações</button>
             <button onclick="mudarAba('feedbacks')" id="tabBtn-feedbacks" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Feedbacks</button>
             <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
+            <button onclick="mudarAba('banners')" id="tabBtn-banners" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Banners</button>
             <button onclick="mudarAba('aparencia')" id="tabBtn-aparencia" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Aparência</button>
         </nav>
 
@@ -154,6 +155,43 @@
 
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Livros cadastrados</h2>
                 <div id="livrosAdminList" class="space-y-4">
+                    <p class="text-xs text-gray-400 text-center">A carregar...</p>
+                </div>
+            </section>
+
+            <!-- Aba: Banners -->
+            <section id="aba-banners" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Carrossel de banners</h2>
+                <p class="text-xs text-warmgray-700 mb-5">Os banners ativos passam em sequência no topo do site. Se não houver nenhum ativo, o carrossel não aparece.</p>
+
+                <div class="bg-white rounded-2xl border border-cream-200 p-6 max-w-md shadow-2xs mb-8">
+                    <h3 class="text-sm font-semibold text-warmgray-800 mb-3">Novo banner</h3>
+                    <form id="addBannerForm" onsubmit="handleAddBanner(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Imagem (ideal: larga, tipo 1600×600)</label>
+                            <input type="file" id="bannerImagemArquivo" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
+                            <input type="url" id="bannerImagemUrl" placeholder="Cole o link de uma imagem" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        </div>
+                        <input type="text" id="bannerTitulo" placeholder="Título (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <input type="text" id="bannerSubtitulo" placeholder="Subtítulo (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <div>
+                            <input type="text" id="bannerLink" placeholder="Link ao clicar (opcional)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                            <p class="text-[11px] text-gray-400 mt-1">Pode ser um endereço completo (https://...) ou uma seção do site, como #catalogo.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="limparFormBanner()" class="bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition">
+                                Limpar
+                            </button>
+                            <button type="submit" id="addBannerBtn" class="flex-1 bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                                Adicionar Banner
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Banners cadastrados</h2>
+                <div id="bannersAdminList" class="space-y-3">
                     <p class="text-xs text-gray-400 text-center">A carregar...</p>
                 </div>
             </section>
@@ -251,6 +289,7 @@
                 carregarFeedbacks();
                 carregarLivrosAdmin();
                 carregarAparencia();
+                carregarBannersAdmin();
             } else {
                 document.getElementById('authError').classList.remove('hidden');
             }
@@ -463,6 +502,226 @@
             }
 
             return null;
+        }
+
+        // ---------- Banners (carrossel) ----------
+        let bannersAdminCache = [];
+
+        function limparFormBanner() {
+            document.getElementById('addBannerForm').reset();
+        }
+
+        async function carregarBannersAdmin() {
+            const container = document.getElementById('bannersAdminList');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('banners')
+                    .select('*')
+                    .order('ordem', { ascending: true })
+                    .order('criado_em', { ascending: true });
+
+                if (error) throw error;
+
+                bannersAdminCache = data || [];
+
+                if (bannersAdminCache.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Nenhum banner cadastrado ainda</p>';
+                    return;
+                }
+
+                const ultimo = bannersAdminCache.length - 1;
+
+                container.innerHTML = bannersAdminCache.map((b, i) => `
+                    <div class="bg-white rounded-xl border border-cream-200 p-3 shadow-2xs ${b.ativo ? '' : 'opacity-60'}">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <img src="${escapeHtml(b.imagem_url)}" class="w-28 h-14 object-cover rounded-lg bg-cream-100 flex-shrink-0">
+                            <div class="flex-1 min-w-[140px]">
+                                <p class="text-sm font-medium text-warmgray-800 truncate">${escapeHtml(b.titulo || '(sem título)')}</p>
+                                <p class="text-[11px] text-gray-500 truncate">${b.link_url ? escapeHtml(b.link_url) : 'sem link'}</p>
+                                <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-semibold ${b.ativo ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}">${b.ativo ? 'ATIVO' : 'INATIVO'}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <button onclick="moverBannerAdmin('${b.id}', -1)" ${i === 0 ? 'disabled' : ''} title="Subir" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-2.5 py-1.5 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                                <button onclick="moverBannerAdmin('${b.id}', 1)" ${i === ultimo ? 'disabled' : ''} title="Descer" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-2.5 py-1.5 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                                <button onclick="toggleBannerAtivo('${b.id}')" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-3 py-1.5 rounded-lg transition">${b.ativo ? 'Desativar' : 'Ativar'}</button>
+                                <button onclick="toggleBannerEdit('${b.id}')" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-3 py-1.5 rounded-lg transition">Editar</button>
+                                <button onclick="deletarBanner('${b.id}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition">Excluir</button>
+                            </div>
+                        </div>
+
+                        <form id="bannerEditForm-${b.id}" onsubmit="handleEditBanner(event, '${b.id}')" class="hidden mt-3 pt-3 border-t border-cream-100 space-y-2">
+                            <input type="text" id="editBannerTitulo-${b.id}" value="${escapeHtml(b.titulo || '')}" placeholder="Título (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                            <input type="text" id="editBannerSubtitulo-${b.id}" value="${escapeHtml(b.subtitulo || '')}" placeholder="Subtítulo (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                            <input type="text" id="editBannerLink-${b.id}" value="${escapeHtml(b.link_url || '')}" placeholder="Link ao clicar (opcional)" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                            <p class="text-[11px] text-gray-400">Para trocar a imagem, escolha uma nova abaixo (ou deixe em branco para manter a atual):</p>
+                            <input type="file" id="editBannerArquivo-${b.id}" accept="image/*" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <input type="url" id="editBannerUrl-${b.id}" placeholder="ou cole o link de uma imagem" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                            <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
+                                Salvar alterações
+                            </button>
+                        </form>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar banners (a tabela "banners" já foi criada no Supabase?)</p>';
+            }
+        }
+
+        async function handleAddBanner(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addBannerBtn');
+            const arquivo = document.getElementById('bannerImagemArquivo').files[0];
+            const urlImagem = document.getElementById('bannerImagemUrl').value;
+            const titulo = document.getElementById('bannerTitulo').value.trim();
+            const subtitulo = document.getElementById('bannerSubtitulo').value.trim();
+            const link = document.getElementById('bannerLink').value.trim();
+
+            if (!arquivo && !urlImagem) {
+                alert('Envie uma imagem ou cole o link de uma imagem');
+                return;
+            }
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const imagem_url = await resolverUrlCapa(arquivo, urlImagem);
+                const proximaOrdem = bannersAdminCache.length > 0
+                    ? Math.max(...bannersAdminCache.map(b => b.ordem || 0)) + 1
+                    : 0;
+
+                const { error } = await supabaseClient
+                    .from('banners')
+                    .insert([{
+                        titulo: titulo || null,
+                        subtitulo: subtitulo || null,
+                        link_url: link || null,
+                        imagem_url,
+                        ordem: proximaOrdem,
+                        ativo: true
+                    }]);
+
+                if (error) throw error;
+
+                limparFormBanner();
+                carregarBannersAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao adicionar banner');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        function toggleBannerEdit(id) {
+            document.getElementById(`bannerEditForm-${id}`).classList.toggle('hidden');
+        }
+
+        async function handleEditBanner(e, id) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const titulo = document.getElementById(`editBannerTitulo-${id}`).value.trim();
+            const subtitulo = document.getElementById(`editBannerSubtitulo-${id}`).value.trim();
+            const link = document.getElementById(`editBannerLink-${id}`).value.trim();
+            const arquivo = document.getElementById(`editBannerArquivo-${id}`).files[0];
+            const urlImagem = document.getElementById(`editBannerUrl-${id}`).value;
+
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const alteracoes = {
+                    titulo: titulo || null,
+                    subtitulo: subtitulo || null,
+                    link_url: link || null
+                };
+                if (arquivo || urlImagem) {
+                    alteracoes.imagem_url = await resolverUrlCapa(arquivo, urlImagem);
+                }
+
+                const { error } = await supabaseClient
+                    .from('banners')
+                    .update(alteracoes)
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                carregarBannersAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao salvar o banner');
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        async function toggleBannerAtivo(id) {
+            const banner = bannersAdminCache.find(b => b.id === id);
+            if (!banner) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('banners')
+                    .update({ ativo: !banner.ativo })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                carregarBannersAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao ativar/desativar o banner');
+            }
+        }
+
+        // Troca a posição do banner com o vizinho (direcao: -1 sobe, 1 desce)
+        async function moverBannerAdmin(id, direcao) {
+            const lista = bannersAdminCache.slice();
+            const i = lista.findIndex(b => b.id === id);
+            const j = i + direcao;
+            if (i < 0 || j < 0 || j >= lista.length) return;
+
+            [lista[i], lista[j]] = [lista[j], lista[i]];
+
+            try {
+                // Regrava a ordem de todos como 0,1,2... (evita problemas se houver ordens repetidas)
+                const pedidos = lista
+                    .map((b, n) => (b.ordem !== n
+                        ? supabaseClient.from('banners').update({ ordem: n }).eq('id', b.id)
+                        : null))
+                    .filter(Boolean);
+
+                const resultados = await Promise.all(pedidos);
+                const falha = resultados.find(r => r.error);
+                if (falha) throw falha.error;
+
+                carregarBannersAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao mudar a ordem do banner');
+            }
+        }
+
+        async function deletarBanner(id) {
+            if (!confirm('Excluir este banner? Essa ação não pode ser desfeita.')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('banners')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                carregarBannersAdmin();
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao excluir o banner');
+            }
         }
 
         // ---------- Aparência do site ----------
