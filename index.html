@@ -281,6 +281,20 @@
         </nav>
     </header>
 
+    <!-- Carrossel de Banners (só aparece se houver banners ativos) -->
+    <section id="bannersSection" class="hidden px-4 sm:px-6 max-w-7xl mx-auto w-full pt-6">
+        <div id="bannersCarousel" class="relative overflow-hidden rounded-3xl border border-sage-200/50 shadow-xs bg-cream-100" role="region" aria-label="Banners">
+            <div id="bannersTrack" class="flex transition-transform duration-500 ease-out"></div>
+            <button id="bannerPrev" onclick="moverBanner(-1, true)" aria-label="Banner anterior" class="hidden absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-warmgray-800 rounded-full p-2 shadow transition">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button id="bannerNext" onclick="moverBanner(1, true)" aria-label="Próximo banner" class="hidden absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-warmgray-800 rounded-full p-2 shadow transition">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            <div id="bannersDots" class="hidden absolute bottom-3 left-0 right-0 flex justify-center gap-1.5"></div>
+        </div>
+    </section>
+
     <section class="py-12 md:py-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
         <div class="bg-gradient-to-r from-sage-100 via-cream-100 to-sage-50 rounded-3xl p-8 md:p-12 border border-sage-200/50 shadow-xs flex flex-col md:flex-row items-center justify-between gap-8">
             <div class="max-w-xl space-y-4">
@@ -1587,6 +1601,130 @@
         }
 
         // ---------- Inicialização ----------
+        // ---------- Carrossel de banners ----------
+        let bannerIdx = 0;
+        let bannerTotal = 0;
+        let bannerTimer = null;
+        let bannerEventosOk = false;
+        const BANNER_INTERVALO = 5000;
+
+        // Só aceita links normais (http, https, caminho do site, âncora ou e-mail)
+        function linkBannerSeguro(url) {
+            const u = String(url || '').trim();
+            return /^(https?:\/\/|\/|#|mailto:)/i.test(u) ? u : '';
+        }
+
+        function pararAutoplayBanner() {
+            if (bannerTimer) clearInterval(bannerTimer);
+            bannerTimer = null;
+        }
+
+        function iniciarAutoplayBanner() {
+            pararAutoplayBanner();
+            const reduzirMovimento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (bannerTotal > 1 && !reduzirMovimento) {
+                bannerTimer = setInterval(() => moverBanner(1), BANNER_INTERVALO);
+            }
+        }
+
+        function irParaBanner(i) {
+            if (bannerTotal === 0) return;
+            bannerIdx = (i + bannerTotal) % bannerTotal;
+            document.getElementById('bannersTrack').style.transform = `translateX(-${bannerIdx * 100}%)`;
+            document.querySelectorAll('#bannersDots button').forEach((ponto, n) => {
+                ponto.className = 'h-2 rounded-full transition-all ' + (n === bannerIdx ? 'w-5 bg-white' : 'w-2 bg-white/60');
+            });
+        }
+
+        function moverBanner(delta, manual) {
+            irParaBanner(bannerIdx + delta);
+            if (manual) iniciarAutoplayBanner();
+        }
+
+        function irManualBanner(i) {
+            irParaBanner(i);
+            iniciarAutoplayBanner();
+        }
+
+        function configurarEventosCarrossel() {
+            if (bannerEventosOk) return;
+            bannerEventosOk = true;
+            const el = document.getElementById('bannersCarousel');
+            el.addEventListener('mouseenter', pararAutoplayBanner);
+            el.addEventListener('mouseleave', iniciarAutoplayBanner);
+
+            // Deslizar o dedo no celular
+            let inicioX = null;
+            el.addEventListener('touchstart', e => { inicioX = e.touches[0].clientX; }, { passive: true });
+            el.addEventListener('touchend', e => {
+                if (inicioX === null) return;
+                const diferenca = e.changedTouches[0].clientX - inicioX;
+                if (Math.abs(diferenca) > 40) moverBanner(diferenca < 0 ? 1 : -1, true);
+                inicioX = null;
+            });
+        }
+
+        async function carregarBanners() {
+            const secao = document.getElementById('bannersSection');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('banners')
+                    .select('id, titulo, subtitulo, imagem_url, link_url, ordem')
+                    .eq('ativo', true)
+                    .order('ordem', { ascending: true })
+                    .order('criado_em', { ascending: true });
+
+                if (error) throw error;
+
+                const banners = data || [];
+                bannerTotal = banners.length;
+
+                if (bannerTotal === 0) {
+                    secao.classList.add('hidden');
+                    pararAutoplayBanner();
+                    return;
+                }
+
+                const tamanho = 'relative block flex-shrink-0 min-w-full aspect-[16/9] sm:aspect-[21/8]';
+
+                document.getElementById('bannersTrack').innerHTML = banners.map(b => {
+                    const link = linkBannerSeguro(b.link_url);
+                    const legenda = (b.titulo || b.subtitulo) ? `
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent p-5 pb-9 sm:p-8 sm:pb-10">
+                            ${b.titulo ? `<h3 class="serif-font text-lg sm:text-3xl font-semibold text-white leading-tight">${escapeHtml(b.titulo)}</h3>` : ''}
+                            ${b.subtitulo ? `<p class="text-xs sm:text-base text-white/90 mt-1 max-w-2xl">${escapeHtml(b.subtitulo)}</p>` : ''}
+                        </div>` : '';
+                    const conteudo = `
+                        <img src="${escapeHtml(b.imagem_url)}" alt="${escapeHtml(b.titulo || 'Banner')}" class="absolute inset-0 w-full h-full object-cover">
+                        ${legenda}`;
+                    if (link) {
+                        const externo = /^https?:/i.test(link) ? ' target="_blank" rel="noopener"' : '';
+                        return `<a href="${escapeHtml(link)}"${externo} class="${tamanho}">${conteudo}</a>`;
+                    }
+                    return `<div class="${tamanho}">${conteudo}</div>`;
+                }).join('');
+
+                const varios = bannerTotal > 1;
+                document.getElementById('bannerPrev').classList.toggle('hidden', !varios);
+                document.getElementById('bannerNext').classList.toggle('hidden', !varios);
+                const pontos = document.getElementById('bannersDots');
+                pontos.classList.toggle('hidden', !varios);
+                pontos.innerHTML = varios
+                    ? banners.map((_, n) => `<button onclick="irManualBanner(${n})" aria-label="Ir para o banner ${n + 1}"></button>`).join('')
+                    : '';
+
+                secao.classList.remove('hidden');
+                configurarEventosCarrossel();
+                irParaBanner(0);
+                iniciarAutoplayBanner();
+                lucide.createIcons();
+            } catch (err) {
+                // Se a tabela ainda não existe, o site simplesmente não mostra o carrossel
+                console.warn('Banners não carregados:', err.message || err);
+                secao.classList.add('hidden');
+            }
+        }
+
         // ---------- Configuração do site (cores e textos editados no admin) ----------
         function aplicarTextosConfig(cfg) {
             document.querySelectorAll('[data-cfg]').forEach(el => {
@@ -1624,6 +1762,7 @@
         async function iniciar() {
             try { aplicarConfiguracoes(JSON.parse(localStorage.getItem('config_site') || '{}')); } catch (e) {}
             carregarConfiguracoes();
+            carregarBanners();
             aplicarTemaSalvo();
             atualizarUISessao();
             renderCart();
