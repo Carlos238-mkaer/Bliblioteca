@@ -21,17 +21,73 @@
             }
         }
     </script>
+    <script>
+        // Tema do painel: escuro por padrão; só fica claro se você escolher isso
+        try { if ((localStorage.getItem('tema_admin') || 'escuro') === 'escuro') document.documentElement.classList.add('tema-escuro'); } catch (e) { document.documentElement.classList.add('tema-escuro'); }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #fdfbf7; color: #4a4846; }
         .serif-font { font-family: 'Playfair Display', serif; }
+
+        /* ===== Tema escuro do painel ===== */
+        html.tema-escuro { color-scheme: dark; }
+        html.tema-escuro body { background-color: #17191a; color: #e8e6e3; }
+        html.tema-escuro .bg-white,
+        html.tema-escuro .bg-cream-100 { background-color: #232627 !important; }
+        html.tema-escuro .bg-cream-50 { background-color: #2b2f30 !important; }
+        html.tema-escuro .hover\:bg-cream-50:hover,
+        html.tema-escuro .hover\:bg-cream-100:hover,
+        html.tema-escuro .hover\:bg-gray-200:hover { background-color: #35393a !important; }
+        html.tema-escuro .border-cream-200,
+        html.tema-escuro .border-cream-100 { border-color: #35393a !important; }
+        html.tema-escuro .text-warmgray-800,
+        html.tema-escuro .text-warmgray-700 { color: #e8e6e3 !important; }
+        html.tema-escuro .text-gray-400,
+        html.tema-escuro .text-gray-500 { color: #9aa0a3 !important; }
+        html.tema-escuro .bg-sage-50,
+        html.tema-escuro .bg-sage-100 { background-color: #243126 !important; }
+        html.tema-escuro .text-sage-600,
+        html.tema-escuro .text-sage-800 { color: #8fc49a !important; }
+        html.tema-escuro input:not([type="color"]),
+        html.tema-escuro textarea,
+        html.tema-escuro select {
+            background-color: #2b2f30 !important;
+            color: #e8e6e3 !important;
+            border-color: #3a3f40 !important;
+        }
+        html.tema-escuro input::placeholder,
+        html.tema-escuro textarea::placeholder { color: #8a8f91 !important; }
+        html.tema-escuro .bg-warmgray-800:not(:hover) { background-color: #3a3f40 !important; }
+        html.tema-escuro #authGate { background-color: #0d0e0f !important; }
+
+        /* Etiquetas e avisos coloridos */
+        html.tema-escuro .bg-emerald-100 { background-color: rgba(16, 185, 129, .18) !important; }
+        html.tema-escuro .hover\:bg-emerald-200:hover { background-color: rgba(16, 185, 129, .3) !important; }
+        html.tema-escuro .text-emerald-700 { color: #6ee7b7 !important; }
+        html.tema-escuro .bg-amber-100,
+        html.tema-escuro .bg-amber-50 { background-color: rgba(245, 158, 11, .16) !important; }
+        html.tema-escuro .text-amber-700 { color: #fcd34d !important; }
+        html.tema-escuro .border-amber-200 { border-color: rgba(245, 158, 11, .4) !important; }
+        html.tema-escuro .bg-red-50 { background-color: rgba(239, 68, 68, .14) !important; }
+        html.tema-escuro .hover\:bg-red-50:hover,
+        html.tema-escuro .hover\:bg-red-100:hover { background-color: rgba(239, 68, 68, .26) !important; }
+        html.tema-escuro .text-red-600,
+        html.tema-escuro .text-red-500 { color: #f87171 !important; }
+        html.tema-escuro .border-red-200 { border-color: rgba(239, 68, 68, .4) !important; }
+        html.tema-escuro .bg-gray-100 { background-color: #2b2f30 !important; }
+        html.tema-escuro .ring-emerald-200 { --tw-ring-color: rgba(16, 185, 129, .35) !important; }
+        html.tema-escuro .ring-amber-200 { --tw-ring-color: rgba(245, 158, 11, .35) !important; }
     </style>
 </head>
 <body class="min-h-screen">
 
     <!-- Portão de senha simples (proteção básica, não é segurança forte) -->
     <div id="authGate" class="fixed inset-0 bg-warmgray-800 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+        <div class="relative bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+            <button type="button" onclick="alternarTemaAdmin()" title="Alternar tema claro/escuro" class="absolute top-3 right-3 text-sm bg-cream-50 hover:bg-cream-100 border border-cream-200 rounded-full w-8 h-8 flex items-center justify-center transition">
+                <span class="icone-tema-admin">☀️</span>
+            </button>
             <div class="w-12 h-12 bg-sage-100 text-sage-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i data-lucide="lock" class="w-6 h-6"></i>
             </div>
@@ -53,10 +109,15 @@
                     <i data-lucide="shield" class="w-5 h-5 text-sage-600"></i>
                     <span>Painel de Administração</span>
                 </div>
-                <a href="index.html" class="text-xs text-warmgray-700 hover:text-sage-600 flex items-center gap-1">
-                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                    Voltar ao site
-                </a>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="alternarTemaAdmin()" title="Alternar tema claro/escuro" class="text-sm bg-white hover:bg-cream-50 border border-cream-200 rounded-full w-8 h-8 flex items-center justify-center transition">
+                        <span class="icone-tema-admin">☀️</span>
+                    </button>
+                    <a href="index.html" class="text-xs text-warmgray-700 hover:text-sage-600 flex items-center gap-1">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                        Voltar ao site
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -68,6 +129,7 @@
             <button onclick="mudarAba('feedbacks')" id="tabBtn-feedbacks" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Feedbacks</button>
             <button onclick="mudarAba('livros')" id="tabBtn-livros" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Livros</button>
             <button onclick="mudarAba('banners')" id="tabBtn-banners" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Banners</button>
+            <button onclick="mudarAba('secoes')" id="tabBtn-secoes" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Seções</button>
             <button onclick="mudarAba('aparencia')" id="tabBtn-aparencia" class="tab-btn px-4 py-2 rounded-full font-medium bg-white border border-cream-200 text-warmgray-700 transition">Aparência</button>
         </nav>
 
@@ -196,6 +258,25 @@
                 </div>
             </section>
 
+            <!-- Aba: Seções -->
+            <section id="aba-secoes" class="tab-content hidden">
+                <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Seções da página inicial</h2>
+                <p class="text-xs text-warmgray-700 mb-5">Escolha o que aparece no site e em que ordem (de cima para baixo). Use as setas para mover e o botão para mostrar ou esconder. Nada muda no site até você salvar.</p>
+
+                <div id="secoesList" class="space-y-2 max-w-2xl">
+                    <p class="text-xs text-gray-400 text-center">A carregar...</p>
+                </div>
+
+                <div class="flex gap-2 max-w-2xl mt-5">
+                    <button type="button" onclick="restaurarSecoes()" class="bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-700 text-xs font-medium px-4 py-2.5 rounded-lg transition">
+                        Restaurar padrão
+                    </button>
+                    <button type="button" id="salvarSecoesBtn" onclick="salvarSecoes()" class="flex-1 bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">
+                        Salvar seções
+                    </button>
+                </div>
+            </section>
+
             <!-- Aba: Aparência -->
             <section id="aba-aparencia" class="tab-content hidden">
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Aparência do site</h2>
@@ -217,6 +298,17 @@
                                 <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
                                     <span>Cor do texto <span class="text-gray-400">(títulos e textos)</span></span>
                                     <input type="color" id="cfgCorTexto" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+                                </label>
+                            </div>
+                            <h4 class="text-xs font-semibold text-warmgray-800 mt-4 mb-2">Tema escuro <span class="font-normal text-gray-400">(a cor principal acima também vale aqui)</span></h4>
+                            <div class="space-y-3">
+                                <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+                                    <span>Fundo do tema escuro</span>
+                                    <input type="color" id="cfgCorFundoEscuro" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+                                    <span>Texto do tema escuro</span>
+                                    <input type="color" id="cfgCorTextoEscuro" oninput="atualizarPreviaAparencia()" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
                                 </label>
                             </div>
                         </div>
@@ -254,7 +346,13 @@
                     </form>
 
                     <div>
-                        <h3 class="text-sm font-semibold text-warmgray-800 mb-3">Prévia</h3>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-warmgray-800">Prévia</h3>
+                            <div class="flex gap-1 text-[11px]">
+                                <button type="button" id="previaBtnClaro" onclick="definirModoPrevia(false)" class="px-3 py-1 rounded-full bg-sage-500 text-white transition">Claro</button>
+                                <button type="button" id="previaBtnEscuro" onclick="definirModoPrevia(true)" class="px-3 py-1 rounded-full bg-white border border-cream-200 text-warmgray-700 transition">Escuro</button>
+                            </div>
+                        </div>
                         <div id="previaAparencia" class="rounded-2xl border border-cream-200 p-6 shadow-2xs"></div>
                         <p class="text-[11px] text-gray-400 mt-2">A prévia mostra uma amostra aproximada. O site completo usa a mesma paleta, com tons mais claros e escuros gerados a partir da cor principal.</p>
                     </div>
@@ -268,6 +366,21 @@
 
     <script>
         lucide.createIcons();
+
+        // ---------- Tema claro/escuro do painel ----------
+        function atualizarIconesTemaAdmin() {
+            const escuro = document.documentElement.classList.contains('tema-escuro');
+            // No escuro mostra o sol (para voltar ao claro); no claro mostra a lua
+            document.querySelectorAll('.icone-tema-admin').forEach(el => { el.textContent = escuro ? '☀️' : '🌙'; });
+        }
+
+        function alternarTemaAdmin() {
+            const escuroAgora = document.documentElement.classList.toggle('tema-escuro');
+            try { localStorage.setItem('tema_admin', escuroAgora ? 'escuro' : 'claro'); } catch (e) {}
+            atualizarIconesTemaAdmin();
+        }
+
+        atualizarIconesTemaAdmin();
 
         // ---------- Senha de acesso ----------
         // Troque esta senha por uma só sua antes de publicar.
@@ -290,6 +403,7 @@
                 carregarLivrosAdmin();
                 carregarAparencia();
                 carregarBannersAdmin();
+                carregarSecoes();
             } else {
                 document.getElementById('authError').classList.remove('hidden');
             }
@@ -724,12 +838,139 @@
             }
         }
 
+        // ---------- Seções da página inicial ----------
+        const SECOES_PADRAO = ['banners', 'hero', 'destaque', 'catalogo', 'avaliacoes', 'contato'];
+        const SECOES_INFO = {
+            banners:    { nome: 'Carrossel de banners', desc: 'Aparece só se houver banners ativos' },
+            hero:       { nome: 'Banner de boas-vindas', desc: 'Título, botões e o card Exclusivo' },
+            destaque:   { nome: 'Livro em destaque', desc: 'Aparece só se houver um livro destacado' },
+            catalogo:   { nome: 'Catálogo de livros', desc: 'Lista de livros, coleções e compra' },
+            avaliacoes: { nome: 'Opiniões e avaliações', desc: 'Avaliações dos leitores' },
+            contato:    { nome: 'Suporte & Feedback', desc: 'Contato, Instagram e formulário' }
+        };
+        let secoesAdmin = SECOES_PADRAO.map(id => ({ id, visivel: true }));
+
+        function secoesEhPadrao() {
+            return secoesAdmin.every((s, i) => s.id === SECOES_PADRAO[i] && s.visivel);
+        }
+
+        function renderizarSecoes() {
+            const lista = document.getElementById('secoesList');
+            const ultimo = secoesAdmin.length - 1;
+            const catalogoOculto = secoesAdmin.some(s => s.id === 'catalogo' && !s.visivel);
+
+            lista.innerHTML = secoesAdmin.map((s, i) => {
+                const info = SECOES_INFO[s.id];
+                return `
+                    <div class="bg-white rounded-xl border border-cream-200 p-3 shadow-2xs flex items-center gap-3 ${s.visivel ? '' : 'opacity-60'}">
+                        <span class="text-xs text-gray-400 w-5 text-center">${i + 1}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-warmgray-800">${escapeHtml(info.nome)}</p>
+                            <p class="text-[11px] text-gray-500">${escapeHtml(info.desc)}</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="moverSecao(${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Subir" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-2.5 py-1.5 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                            <button onclick="moverSecao(${i}, 1)" ${i === ultimo ? 'disabled' : ''} title="Descer" class="text-xs bg-cream-50 hover:bg-cream-100 text-warmgray-800 px-2.5 py-1.5 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                            <button onclick="alternarSecao(${i})" class="text-xs w-20 ${s.visivel ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'} py-1.5 rounded-lg transition">${s.visivel ? 'Visível' : 'Escondida'}</button>
+                        </div>
+                    </div>
+                `;
+            }).join('') + (catalogoOculto
+                ? '<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">Atenção: com o catálogo escondido, os clientes só conseguem comprar pelo livro em destaque ou pelo card Exclusivo.</p>'
+                : '');
+        }
+
+        function moverSecao(i, direcao) {
+            const j = i + direcao;
+            if (j < 0 || j >= secoesAdmin.length) return;
+            [secoesAdmin[i], secoesAdmin[j]] = [secoesAdmin[j], secoesAdmin[i]];
+            renderizarSecoes();
+        }
+
+        function alternarSecao(i) {
+            secoesAdmin[i].visivel = !secoesAdmin[i].visivel;
+            renderizarSecoes();
+        }
+
+        async function carregarSecoes() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('configuracoes')
+                    .select('valor')
+                    .eq('chave', 'secoes')
+                    .maybeSingle();
+                if (error) throw error;
+
+                let salvas = [];
+                try { salvas = JSON.parse(data?.valor || '[]'); } catch (e) {}
+                if (!Array.isArray(salvas)) salvas = [];
+
+                const vistas = new Set();
+                const ordem = [];
+                salvas.forEach(item => {
+                    if (item && SECOES_INFO[item.id] && !vistas.has(item.id)) {
+                        vistas.add(item.id);
+                        ordem.push({ id: item.id, visivel: item.visivel !== false });
+                    }
+                });
+                SECOES_PADRAO.forEach(id => { if (!vistas.has(id)) ordem.push({ id, visivel: true }); });
+                secoesAdmin = ordem;
+            } catch (err) {
+                console.warn('Seções não carregadas (tabela configuracoes disponível?):', err.message || err);
+                secoesAdmin = SECOES_PADRAO.map(id => ({ id, visivel: true }));
+            }
+            renderizarSecoes();
+        }
+
+        async function salvarSecoes() {
+            const btn = document.getElementById('salvarSecoesBtn');
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Salvando...';
+
+            try {
+                if (secoesEhPadrao()) {
+                    // Voltou ao padrão: não precisa guardar nada
+                    const { error } = await supabaseClient.from('configuracoes').delete().eq('chave', 'secoes');
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient
+                        .from('configuracoes')
+                        .upsert([{ chave: 'secoes', valor: JSON.stringify(secoesAdmin) }], { onConflict: 'chave' });
+                    if (error) throw error;
+                }
+                alert('Seções salvas! Recarregue o site para ver a mudança.');
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao salvar as seções');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        async function restaurarSecoes() {
+            if (!confirm('Voltar todas as seções à ordem original e deixá-las visíveis?')) return;
+
+            try {
+                const { error } = await supabaseClient.from('configuracoes').delete().eq('chave', 'secoes');
+                if (error) throw error;
+                await carregarSecoes();
+                alert('Padrão restaurado!');
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao restaurar as seções');
+            }
+        }
+
         // ---------- Aparência do site ----------
         // Estes padrões precisam ser iguais aos do index.html
         const CFG_PADRAO = {
             cor_principal: '#7a9e7e',
             cor_fundo: '#fdfbf7',
             cor_texto: '#2d2b2a',
+            cor_fundo_escuro: '#17191a',
+            cor_texto_escuro: '#e8e6e3',
             nome_site: 'Biblioteca Digital',
             hero_selo: 'Um refúgio para leitores e estudantes',
             hero_titulo: 'A sua biblioteca online simples e tranquila.',
@@ -739,6 +980,8 @@
             cor_principal: 'cfgCorPrincipal',
             cor_fundo: 'cfgCorFundo',
             cor_texto: 'cfgCorTexto',
+            cor_fundo_escuro: 'cfgCorFundoEscuro',
+            cor_texto_escuro: 'cfgCorTextoEscuro',
             nome_site: 'cfgNomeSite',
             hero_selo: 'cfgHeroSelo',
             hero_titulo: 'cfgHeroTitulo',
@@ -764,21 +1007,58 @@
             return valores;
         }
 
+        let previaEscura = false;
+
+        function definirModoPrevia(escura) {
+            previaEscura = escura;
+            const ativo = 'px-3 py-1 rounded-full bg-sage-500 text-white transition';
+            const inativo = 'px-3 py-1 rounded-full bg-white border border-cream-200 text-warmgray-700 transition';
+            document.getElementById('previaBtnClaro').className = escura ? inativo : ativo;
+            document.getElementById('previaBtnEscuro').className = escura ? ativo : inativo;
+            atualizarPreviaAparencia();
+        }
+
+        function luminanciaAdmin(c) {
+            const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+        }
+
         function atualizarPreviaAparencia() {
             const v = lerCamposAparencia();
             const BRANCO = [255, 255, 255], PRETO = [0, 0, 0];
             const principal = hexParaRgbAdmin(v.cor_principal);
-            const fundo = hexParaRgbAdmin(v.cor_fundo);
-            const texto = hexParaRgbAdmin(v.cor_texto);
-
             const previa = document.getElementById('previaAparencia');
+
+            // Cores conforme o modo da prévia (claro ou escuro)
+            let fundo, textoCor, corTitulo, corCardFundo, corSelo, corSeloFundo;
+            if (previaEscura) {
+                const fundoEscuro = hexParaRgbAdmin(v.cor_fundo_escuro);
+                textoCor = hexParaRgbAdmin(v.cor_texto_escuro);
+                fundo = fundoEscuro;
+                corCardFundo = misturarAdmin(principal, PRETO, 0.70);
+                let acento = misturarAdmin(principal, BRANCO, 0.25);
+                for (let p = 0.25; luminanciaAdmin(acento) < 0.40 && p < 0.9; p += 0.05) {
+                    acento = misturarAdmin(principal, BRANCO, p);
+                }
+                corTitulo = acento;
+                corSelo = acento;
+                corSeloFundo = misturarAdmin(fundoEscuro, BRANCO, 0.055);
+            } else {
+                fundo = hexParaRgbAdmin(v.cor_fundo);
+                textoCor = hexParaRgbAdmin(v.cor_texto);
+                corCardFundo = misturarAdmin(principal, BRANCO, 0.80);
+                corTitulo = misturarAdmin(principal, PRETO, 0.54);
+                corSelo = misturarAdmin(principal, PRETO, 0.25);
+                corSeloFundo = [255, 255, 255];
+            }
+
             previa.style.background = rgbCss(fundo);
-            previa.style.color = rgbCss(misturarAdmin(texto, BRANCO, 0.12));
+            previa.style.color = rgbCss(previaEscura ? misturarAdmin(textoCor, fundo, 0.12) : misturarAdmin(textoCor, BRANCO, 0.12));
             previa.innerHTML = `
-                <p style="font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:${rgbCss(misturarAdmin(principal, PRETO, 0.54))};margin-bottom:14px;">${escapeHtml(v.nome_site || CFG_PADRAO.nome_site)}</p>
-                <div style="background:${rgbCss(misturarAdmin(principal, BRANCO, 0.80))};border-radius:14px;padding:18px;">
-                    <span style="display:inline-block;background:rgba(255,255,255,.8);color:${rgbCss(misturarAdmin(principal, PRETO, 0.25))};font-size:10px;padding:3px 10px;border-radius:999px;margin-bottom:10px;">${escapeHtml(v.hero_selo || CFG_PADRAO.hero_selo)}</span>
-                    <p style="font-family:'Playfair Display',serif;font-weight:600;font-size:20px;line-height:1.2;color:${rgbCss(texto)};margin-bottom:8px;">${escapeHtml(v.hero_titulo || CFG_PADRAO.hero_titulo)}</p>
+                <p style="font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:${rgbCss(corTitulo)};margin-bottom:14px;">${escapeHtml(v.nome_site || CFG_PADRAO.nome_site)}</p>
+                <div style="background:${rgbCss(corCardFundo)};border-radius:14px;padding:18px;">
+                    <span style="display:inline-block;background:${rgbCss(corSeloFundo)};color:${rgbCss(corSelo)};font-size:10px;padding:3px 10px;border-radius:999px;margin-bottom:10px;">${escapeHtml(v.hero_selo || CFG_PADRAO.hero_selo)}</span>
+                    <p style="font-family:'Playfair Display',serif;font-weight:600;font-size:20px;line-height:1.2;color:${rgbCss(textoCor)};margin-bottom:8px;">${escapeHtml(v.hero_titulo || CFG_PADRAO.hero_titulo)}</p>
                     <p style="font-size:11px;line-height:1.5;margin-bottom:12px;">${escapeHtml(v.hero_subtitulo || CFG_PADRAO.hero_subtitulo)}</p>
                     <span style="display:inline-block;background:${rgbCss(principal)};color:#fff;font-size:11px;font-weight:500;padding:7px 16px;border-radius:999px;">Ver Catálogo</span>
                 </div>
