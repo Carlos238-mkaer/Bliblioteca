@@ -26,6 +26,19 @@
             --cream-200: 238 229 216;
             --warmgray-700: 74 72 70;
             --warmgray-800: 45 43 42;
+            /* Tema escuro */
+            --dk-bg: 23 25 26;
+            --dk-surface: 35 38 39;
+            --dk-border: 53 57 58;
+            --dk-text: 232 230 227;
+            --dk-muted: 154 160 163;
+            --dk-tint: 36 49 38;
+            --dk-accent: 143 196 154;
+            --dk-input: 43 47 48;
+            --dk-input-border: 58 63 64;
+            --dk-placeholder: 138 143 145;
+            /* Cor do texto sobre botões da cor principal (vira escuro se a cor escolhida for clara) */
+            --on-principal: 255 255 255;
         }
     </style>
     <script>
@@ -53,6 +66,7 @@
                 v['--sage-500'] = principal;
                 v['--sage-600'] = misturarCores(principal, PRETO, 0.25);
                 v['--sage-800'] = misturarCores(principal, PRETO, 0.54);
+                v['--on-principal'] = luminanciaRel(principal) > 0.45 ? [30, 30, 30] : [255, 255, 255];
             }
             if (fundo) {
                 v['--cream-50'] = fundo;
@@ -64,9 +78,39 @@
                 v['--warmgray-800'] = texto;
                 v['--warmgray-700'] = misturarCores(texto, BRANCO, 0.12);
             }
+            // ----- Tema escuro -----
+            const fundoEscuro = hexParaRgb(cfg.cor_fundo_escuro);
+            const textoEscuro = hexParaRgb(cfg.cor_texto_escuro);
+            if (fundoEscuro) {
+                v['--dk-bg'] = fundoEscuro;
+                v['--dk-surface'] = misturarCores(fundoEscuro, BRANCO, 0.055);
+                v['--dk-border'] = misturarCores(fundoEscuro, BRANCO, 0.13);
+                v['--dk-input'] = misturarCores(fundoEscuro, BRANCO, 0.086);
+                v['--dk-input-border'] = misturarCores(fundoEscuro, BRANCO, 0.15);
+            }
+            if (textoEscuro) {
+                const baseEscura = fundoEscuro || [23, 25, 26];
+                v['--dk-text'] = textoEscuro;
+                v['--dk-muted'] = misturarCores(textoEscuro, baseEscura, 0.34);
+                v['--dk-placeholder'] = misturarCores(textoEscuro, baseEscura, 0.45);
+            }
+            if (principal) {
+                v['--dk-tint'] = misturarCores(principal, PRETO, 0.70);
+                // Clareia a cor principal até ficar legível sobre fundo escuro
+                let destaque = misturarCores(principal, BRANCO, 0.25);
+                for (let p = 0.25; luminanciaRel(destaque) < 0.40 && p < 0.9; p += 0.05) {
+                    destaque = misturarCores(principal, BRANCO, p);
+                }
+                v['--dk-accent'] = destaque;
+            }
             return v;
         }
-        const VARIAVEIS_PALETA = ['--sage-50', '--sage-100', '--sage-200', '--sage-500', '--sage-600', '--sage-800', '--cream-50', '--cream-100', '--cream-200', '--warmgray-700', '--warmgray-800'];
+        function luminanciaRel(c) {
+            const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+        }
+        const VARIAVEIS_PALETA = ['--sage-50', '--sage-100', '--sage-200', '--sage-500', '--sage-600', '--sage-800', '--cream-50', '--cream-100', '--cream-200', '--warmgray-700', '--warmgray-800',
+            '--dk-bg', '--dk-surface', '--dk-border', '--dk-text', '--dk-muted', '--dk-tint', '--dk-accent', '--dk-input', '--dk-input-border', '--dk-placeholder', '--on-principal'];
         function aplicarPaleta(cfg) {
             const raiz = document.documentElement;
             const nova = gerarPaleta(cfg || {});
@@ -77,6 +121,8 @@
         }
         // Aplica logo de cara a última configuração salva neste navegador (evita "piscar" as cores antigas)
         try { aplicarPaleta(JSON.parse(localStorage.getItem('config_site') || '{}')); } catch (e) {}
+        // Tema escuro é o padrão; só fica claro se a pessoa tiver escolhido isso antes
+        try { if ((localStorage.getItem('tema') || 'escuro') === 'escuro') document.documentElement.classList.add('tema-escuro'); } catch (e) { document.documentElement.classList.add('tema-escuro'); }
     </script>
     <script>
         tailwind.config = {
@@ -120,57 +166,102 @@
             font-family: 'Playfair Display', serif;
         }
 
-        /* ===== Tema Escuro ===== */
-        body.tema-escuro {
-            background-color: #17191a;
-            color: #e8e6e3;
+        /* ===== Tema Escuro (usa as variáveis --dk-*, que o admin pode alterar) ===== */
+        .tema-escuro body {
+            background-color: rgb(var(--dk-bg));
+            color: rgb(var(--dk-text));
         }
-        body.tema-escuro header,
-        body.tema-escuro nav,
-        body.tema-escuro footer,
-        body.tema-escuro .bg-cream-50,
-        body.tema-escuro .bg-cream-100,
-        body.tema-escuro .bg-white,
-        body.tema-escuro .bg-cream-100\/60 {
-            background-color: #232627 !important;
+        .tema-escuro header,
+        .tema-escuro nav,
+        .tema-escuro footer,
+        .tema-escuro .bg-cream-50,
+        .tema-escuro .bg-cream-100,
+        .tema-escuro .bg-white,
+        .tema-escuro .bg-white\/70,
+        .tema-escuro .bg-white\/80,
+        .tema-escuro .bg-cream-100\/60 {
+            background-color: rgb(var(--dk-surface)) !important;
         }
-        body.tema-escuro .border-cream-200,
-        body.tema-escuro .border-sage-200,
-        body.tema-escuro .border-sage-200\/50,
-        body.tema-escuro .border-sage-200\/60,
-        body.tema-escuro .divide-cream-200 {
-            border-color: #35393a !important;
+        .tema-escuro .bg-cream-200 {
+            background-color: rgb(var(--dk-border)) !important;
         }
-        body.tema-escuro .text-warmgray-800,
-        body.tema-escuro .text-warmgray-700 {
-            color: #e8e6e3 !important;
+        .tema-escuro .border-cream-200,
+        .tema-escuro .border-cream-100,
+        .tema-escuro .border-sage-200,
+        .tema-escuro .border-sage-200\/50,
+        .tema-escuro .border-sage-200\/60,
+        .tema-escuro .divide-cream-200 {
+            border-color: rgb(var(--dk-border)) !important;
         }
-        body.tema-escuro .text-gray-500,
-        body.tema-escuro .text-gray-400 {
-            color: #9aa0a3 !important;
+        .tema-escuro .text-warmgray-800,
+        .tema-escuro .text-warmgray-700 {
+            color: rgb(var(--dk-text)) !important;
         }
-        body.tema-escuro .bg-sage-50,
-        body.tema-escuro .bg-sage-100,
-        body.tema-escuro .bg-sage-100\/90 {
-            background-color: #243126 !important;
+        .tema-escuro .text-gray-500,
+        .tema-escuro .text-gray-400 {
+            color: rgb(var(--dk-muted)) !important;
         }
-        body.tema-escuro .text-sage-800,
-        body.tema-escuro .text-sage-600 {
-            color: #8fc49a !important;
+        .tema-escuro .bg-sage-50,
+        .tema-escuro .bg-sage-100,
+        .tema-escuro .bg-sage-100\/90 {
+            background-color: rgb(var(--dk-tint)) !important;
         }
-        body.tema-escuro input,
-        body.tema-escuro textarea,
-        body.tema-escuro select {
-            background-color: #2b2f30 !important;
-            color: #e8e6e3 !important;
-            border-color: #3a3f40 !important;
+        .tema-escuro .text-sage-800,
+        .tema-escuro .text-sage-600 {
+            color: rgb(var(--dk-accent)) !important;
         }
-        body.tema-escuro input::placeholder,
-        body.tema-escuro textarea::placeholder {
-            color: #8a8f91 !important;
+        .tema-escuro input,
+        .tema-escuro textarea,
+        .tema-escuro select {
+            background-color: rgb(var(--dk-input)) !important;
+            color: rgb(var(--dk-text)) !important;
+            border-color: rgb(var(--dk-input-border)) !important;
         }
-        body.tema-escuro .bg-gradient-to-r.from-sage-100 {
-            background-image: linear-gradient(to right, #243126, #232627, #243126) !important;
+        .tema-escuro input::placeholder,
+        .tema-escuro textarea::placeholder {
+            color: rgb(var(--dk-placeholder)) !important;
+        }
+        .tema-escuro .bg-gradient-to-r.from-sage-100 {
+            background-image: linear-gradient(to right, rgb(var(--dk-tint)), rgb(var(--dk-surface)), rgb(var(--dk-tint))) !important;
+        }
+
+        /* Texto dos botões da cor principal acompanha a cor escolhida (claro ou escuro) */
+        .bg-sage-500.text-white {
+            color: rgb(var(--on-principal));
+        }
+
+        /* Ao passar o mouse, os fundos claros do tema claro não podem "acender" no tema escuro */
+        .tema-escuro .hover\:bg-sage-50:hover,
+        .tema-escuro .hover\:bg-sage-100:hover {
+            background-color: rgb(var(--dk-tint)) !important;
+        }
+        .tema-escuro .hover\:bg-cream-50:hover,
+        .tema-escuro .hover\:bg-cream-100:hover,
+        .tema-escuro .hover\:bg-white:hover {
+            background-color: rgb(var(--dk-border)) !important;
+        }
+
+        /* Botões escuros (ex.: "Adicionar ao carrinho") não dependem mais da cor de texto do tema claro */
+        .tema-escuro .bg-warmgray-800:not(:hover) {
+            background-color: rgb(var(--dk-input-border)) !important;
+        }
+
+        /* Pílulas brancas dos cards de Destaque/Exclusivo continuam brancas (ficam sobre fundo verde/dourado) */
+        .tema-escuro .bg-white.text-emerald-700 { background-color: #ffffff !important; }
+        .tema-escuro .bg-white.text-emerald-700:hover { background-color: #ecfdf5 !important; }
+        .tema-escuro .bg-white.text-amber-700 { background-color: #ffffff !important; }
+        .tema-escuro .bg-white.text-amber-700:hover { background-color: #fffbeb !important; }
+
+        /* Botões desativados translúcidos sobre esses cards precisam de texto escuro */
+        .tema-escuro .bg-white\/60.text-warmgray-700,
+        .tema-escuro .bg-white\/50.text-warmgray-700 {
+            color: #2d2b2a !important;
+        }
+
+        /* Seleção de texto legível no tema escuro */
+        html.tema-escuro ::selection {
+            background-color: rgb(var(--sage-500) / 0.45);
+            color: rgb(var(--dk-text));
         }
     </style>
 </head>
@@ -295,7 +386,7 @@
         </div>
     </section>
 
-    <section class="py-12 md:py-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
+    <section id="heroSection" class="py-12 md:py-16 px-4 sm:px-6 max-w-7xl mx-auto w-full">
         <div class="bg-gradient-to-r from-sage-100 via-cream-100 to-sage-50 rounded-3xl p-8 md:p-12 border border-sage-200/50 shadow-xs flex flex-col md:flex-row items-center justify-between gap-8">
             <div class="max-w-xl space-y-4">
                 <span data-cfg="hero_selo" class="inline-block bg-white/80 text-sage-600 font-medium text-xs px-3 py-1 rounded-full border border-sage-200/60 shadow-2xs">
@@ -885,18 +976,17 @@
         }
 
         function toggleTema() {
-            const escuroAgora = document.body.classList.toggle('tema-escuro');
+            const escuroAgora = document.documentElement.classList.toggle('tema-escuro');
             localStorage.setItem('tema', escuroAgora ? 'escuro' : 'claro');
             document.getElementById('iconeTema').setAttribute('data-lucide', escuroAgora ? 'sun' : 'moon');
             lucide.createIcons();
         }
 
         function aplicarTemaSalvo() {
-            const salvo = localStorage.getItem('tema');
-            if (salvo === 'escuro') {
-                document.body.classList.add('tema-escuro');
-                document.getElementById('iconeTema').setAttribute('data-lucide', 'sun');
-            }
+            const escuro = (localStorage.getItem('tema') || 'escuro') === 'escuro';
+            document.documentElement.classList.toggle('tema-escuro', escuro);
+            document.getElementById('iconeTema').setAttribute('data-lucide', escuro ? 'sun' : 'moon');
+            lucide.createIcons();
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -1736,9 +1826,52 @@
             document.title = `${cfg.nome_site || nomePadrao} - Plataforma de Leitura Online`;
         }
 
+        // ---------- Seções da página inicial (ordem e visibilidade definidas no admin) ----------
+        const SECOES_PADRAO = ['banners', 'hero', 'destaque', 'catalogo', 'avaliacoes', 'contato'];
+        const SECOES_ELEMENTOS = {
+            banners: 'bannersSection',
+            hero: 'heroSection',
+            destaque: 'destaqueSection',
+            catalogo: 'catalogo',
+            avaliacoes: 'avaliacoes',
+            contato: 'contato'
+        };
+
+        function aplicarSecoes(cfg) {
+            let salvas = [];
+            try { salvas = JSON.parse(cfg.secoes || '[]'); } catch (e) {}
+            if (!Array.isArray(salvas)) salvas = [];
+
+            const vistas = new Set();
+            const ordem = [];
+            salvas.forEach(item => {
+                if (item && SECOES_ELEMENTOS[item.id] && !vistas.has(item.id)) {
+                    vistas.add(item.id);
+                    ordem.push({ id: item.id, visivel: item.visivel !== false });
+                }
+            });
+            // Seções que não estão na configuração salva ficam no fim, visíveis
+            SECOES_PADRAO.forEach(id => { if (!vistas.has(id)) ordem.push({ id, visivel: true }); });
+
+            const rodape = document.querySelector('footer');
+            ordem.forEach(({ id, visivel }) => {
+                const elId = SECOES_ELEMENTOS[id];
+                const el = document.getElementById(elId);
+                if (!el) return;
+                rodape.parentNode.insertBefore(el, rodape);
+                // display inline não briga com a classe "hidden" que algumas seções usam sozinhas
+                el.style.display = visivel ? '' : 'none';
+                // Esconde também os links do menu que levam a uma seção escondida
+                document.querySelectorAll(`nav a[href="#${elId}"]`).forEach(a => {
+                    a.style.display = visivel ? '' : 'none';
+                });
+            });
+        }
+
         function aplicarConfiguracoes(cfg) {
             aplicarPaleta(cfg);
             aplicarTextosConfig(cfg);
+            aplicarSecoes(cfg);
         }
 
         async function carregarConfiguracoes() {
