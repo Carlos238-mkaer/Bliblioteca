@@ -82,7 +82,7 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Portão de senha simples (proteção básica, não é segurança forte) -->
+    <!-- Tela de login do administrador (conta real do Supabase) -->
     <div id="authGate" class="fixed inset-0 bg-warmgray-800 flex items-center justify-center p-4 z-50">
         <div class="relative bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
             <button type="button" onclick="alternarTemaAdmin()" title="Alternar tema claro/escuro" class="absolute top-3 right-3 text-sm bg-cream-50 hover:bg-cream-100 border border-cream-200 rounded-full w-8 h-8 flex items-center justify-center transition">
@@ -92,16 +92,17 @@
                 <i data-lucide="lock" class="w-6 h-6"></i>
             </div>
             <h1 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Área restrita</h1>
-            <p class="text-xs text-warmgray-700 mb-5">Digite a senha de administrador para continuar.</p>
+            <p class="text-xs text-warmgray-700 mb-5">Entre com a conta de administrador para continuar.</p>
             <form id="authForm" onsubmit="handleAuth(event)" class="space-y-3">
-                <input type="password" id="authPassword" required placeholder="Senha" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none text-center">
-                <button type="submit" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-sm font-medium py-2.5 rounded-lg transition">Entrar</button>
+                <input type="email" id="authEmail" required autocomplete="username" placeholder="E-mail" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none text-center">
+                <input type="password" id="authPassword" required autocomplete="current-password" placeholder="Senha" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none text-center">
+                <button type="submit" id="authBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-sm font-medium py-2.5 rounded-lg transition">Entrar</button>
             </form>
-            <p id="authError" class="hidden text-xs text-red-500 mt-3">Senha incorreta.</p>
+            <p id="authError" class="hidden text-xs text-red-500 mt-3"></p>
         </div>
     </div>
 
-    <!-- Painel de Administração (só aparece após a senha correta) -->
+    <!-- Painel de Administração (só aparece depois de entrar como administrador) -->
     <div id="adminPanel" class="hidden">
         <header class="bg-cream-100 border-b border-cream-200 py-4 px-4 sm:px-6">
             <div class="max-w-6xl mx-auto flex items-center justify-between">
@@ -117,6 +118,9 @@
                         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                         Voltar ao site
                     </a>
+                    <button type="button" onclick="sairAdmin()" class="text-xs bg-white hover:bg-red-50 border border-cream-200 text-warmgray-700 hover:text-red-600 rounded-full px-3 py-1.5 transition">
+                        Sair
+                    </button>
                 </div>
             </div>
         </header>
@@ -382,30 +386,103 @@
 
         atualizarIconesTemaAdmin();
 
-        // ---------- Senha de acesso ----------
-        // Troque esta senha por uma só sua antes de publicar.
-        const ADMIN_PASSWORD = "troque-esta-senha";
-
+        // ---------- Login do administrador (Supabase Auth) ----------
         // Guarda os livros carregados, para buscar dados (como o título) sem precisar
         // colocar texto livre dentro de atributos onclick (o que pode quebrar com aspas)
         let livrosAdminCache = [];
 
-        function handleAuth(e) {
+        function mostrarErroLogin(mensagem) {
+            const el = document.getElementById('authError');
+            el.textContent = mensagem;
+            el.classList.remove('hidden');
+        }
+
+        // A conta logada está na lista de administradores? (função eh_admin do banco)
+        async function verificarAdmin() {
+            try {
+                const { data, error } = await supabaseClient.rpc('eh_admin');
+                return !error && data === true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function abrirPainel() {
+            document.getElementById('authGate').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            carregarPendentes();
+            carregarCompras();
+            carregarAvaliacoesAdmin();
+            carregarFeedbacks();
+            carregarLivrosAdmin();
+            carregarAparencia();
+            carregarBannersAdmin();
+            carregarSecoes();
+        }
+
+        function mostrarTelaLogin(mensagem) {
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('authGate').classList.remove('hidden');
+            document.getElementById('authPassword').value = '';
+            if (mensagem) mostrarErroLogin(mensagem);
+            else document.getElementById('authError').classList.add('hidden');
+        }
+
+        async function handleAuth(e) {
             e.preventDefault();
+            const btn = document.getElementById('authBtn');
+            const email = document.getElementById('authEmail').value.trim();
             const senha = document.getElementById('authPassword').value;
-            if (senha === ADMIN_PASSWORD) {
-                document.getElementById('authGate').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                carregarPendentes();
-                carregarCompras();
-                carregarAvaliacoesAdmin();
-                carregarFeedbacks();
-                carregarLivrosAdmin();
-                carregarAparencia();
-                carregarBannersAdmin();
-                carregarSecoes();
-            } else {
-                document.getElementById('authError').classList.remove('hidden');
+
+            document.getElementById('authError').classList.add('hidden');
+            btn.disabled = true;
+            const textoOriginal = btn.textContent;
+            btn.textContent = 'Entrando...';
+
+            try {
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+                if (error) throw new Error('E-mail ou senha incorretos.');
+
+                if (!(await verificarAdmin())) {
+                    await supabaseClient.auth.signOut();
+                    throw new Error('Esta conta não tem acesso de administrador.');
+                }
+
+                abrirPainel();
+            } catch (err) {
+                mostrarErroLogin(err.message || 'Não foi possível entrar. Tente de novo.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
+        }
+
+        async function sairAdmin() {
+            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            mostrarTelaLogin();
+        }
+
+        // Chamadas ao servidor (/api) que exigem administrador: enviam a sessão junto
+        async function chamarApiAdmin(url, opcoes = {}) {
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data && data.session ? data.session.access_token : '';
+            const resposta = await fetch(url, {
+                ...opcoes,
+                headers: { ...(opcoes.headers || {}), Authorization: `Bearer ${token}` }
+            });
+            if (resposta.status === 401) {
+                mostrarTelaLogin('Sua sessão expirou. Entre novamente.');
+            }
+            return resposta;
+        }
+
+        // Ao abrir a página: se já houver uma sessão de administrador, entra direto
+        async function iniciarAdmin() {
+            try {
+                const { data } = await supabaseClient.auth.getSession();
+                if (data && data.session && await verificarAdmin()) abrirPainel();
+            } catch (e) {
+                console.warn('Não foi possível restaurar a sessão:', e.message || e);
             }
         }
 
@@ -431,7 +508,7 @@
         async function carregarPendentes() {
             const container = document.getElementById('pendentesList');
             try {
-                const resp = await fetch('/api/compras');
+                const resp = await chamarApiAdmin('/api/compras');
                 const compras = await resp.json();
                 const pendentes = (compras || []).filter(c => c.status === 'pendente');
 
@@ -468,7 +545,7 @@
             if (!confirm('Recusar esse pagamento? O cliente poderá tentar comprar de novo.')) return;
 
             try {
-                const resp = await fetch('/api/compras', {
+                const resp = await chamarApiAdmin('/api/compras', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status: 'recusada' }),
@@ -488,7 +565,7 @@
             if (!confirm('Confirma que o Pix caiu na sua conta para essa compra?')) return;
 
             try {
-                const resp = await fetch('/api/compras', {
+                const resp = await chamarApiAdmin('/api/compras', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status: 'confirmada' }),
@@ -508,7 +585,7 @@
         async function carregarCompras() {
             const tbody = document.getElementById('comprasTableBody');
             try {
-                const resp = await fetch('/api/compras');
+                const resp = await chamarApiAdmin('/api/compras');
                 const compras = await resp.json();
 
                 if (!compras || compras.length === 0) {
@@ -568,7 +645,7 @@
         async function carregarFeedbacks() {
             const list = document.getElementById('feedbacksList');
             try {
-                const resp = await fetch('/api/feedback');
+                const resp = await chamarApiAdmin('/api/feedback');
                 const feedbacks = await resp.json();
 
                 if (!feedbacks || feedbacks.length === 0) {
@@ -1561,6 +1638,8 @@
                 btn.textContent = textoOriginal;
             }
         }
+
+        iniciarAdmin();
     </script>
 </body>
 </html>
