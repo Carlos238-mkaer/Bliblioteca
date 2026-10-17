@@ -1,10 +1,14 @@
 import { neon } from '@neondatabase/serverless';
+import { exigirAdmin } from '../lib/auth-admin.js';
 
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { cliente_id } = req.query;
+
+    // A lista de TODAS as compras (com nomes e e-mails) é só para o administrador
+    if (!cliente_id && !(await exigirAdmin(req, res))) return;
 
     try {
       const compras = cliente_id
@@ -49,10 +53,16 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
+    if (!(await exigirAdmin(req, res))) return;
+
     const { id, status } = req.body || {};
 
     if (!id || !status) {
       return res.status(400).json({ erro: 'Envie id e status' });
+    }
+
+    if (!['pendente', 'confirmada', 'recusada'].includes(status)) {
+      return res.status(400).json({ erro: 'Status inválido' });
     }
 
     try {
