@@ -1,9 +1,13 @@
 import { neon } from '@neondatabase/serverless';
+import { exigirAdmin } from '../lib/auth-admin.js';
 
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    // Ler os feedbacks (nomes e e-mails) é só para o administrador
+    if (!(await exigirAdmin(req, res))) return;
+
     try {
       const feedbacks = await sql`
         SELECT id, nome, email, mensagem, criado_em
