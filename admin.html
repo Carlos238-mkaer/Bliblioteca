@@ -471,9 +471,39 @@
                 headers: { ...(opcoes.headers || {}), Authorization: `Bearer ${token}` }
             });
             if (resposta.status === 401) {
-                mostrarTelaLogin('Sua sessão expirou. Entre novamente.');
+                let motivo = 'Sua sessão expirou. Entre novamente.';
+                try {
+                    const dados = await resposta.clone().json();
+                    if (dados && dados.erro) {
+                        motivo = dados.erro + (dados.detalhe ? ` (${dados.detalhe})` : '');
+                    }
+                } catch (e) {}
+                mostrarTelaLogin(motivo);
             }
             return resposta;
+        }
+
+        // Lê a resposta do servidor. Se deu erro, levanta uma mensagem que explica o motivo
+        // (em vez de esconder tudo atrás de um "erro ao carregar" genérico).
+        async function lerRespostaApi(resposta) {
+            const texto = await resposta.text();
+            let dados = null;
+            try { dados = texto ? JSON.parse(texto) : null; } catch (e) {}
+
+            if (!resposta.ok) {
+                if (dados && dados.erro) {
+                    const detalhe = dados.detalhe ? ` — ${dados.detalhe}` : '';
+                    const codigo = dados.codigo ? ` [${dados.codigo}]` : '';
+                    throw new Error(`${dados.erro}${detalhe}${codigo} (HTTP ${resposta.status})`);
+                }
+                throw new Error(`O servidor falhou sem explicar o motivo (HTTP ${resposta.status}). Veja os logs da função na Vercel.`);
+            }
+            if (dados === null) throw new Error('O servidor respondeu em um formato inesperado.');
+            return dados;
+        }
+
+        function mensagemErroAba(titulo, err) {
+            return `<p class="text-xs text-red-500 text-center leading-relaxed"><strong>${escapeHtml(titulo)}</strong><br>${escapeHtml(err.message || String(err))}</p>`;
         }
 
         // Ao abrir a página: se já houver uma sessão de administrador, entra direto
@@ -509,8 +539,9 @@
             const container = document.getElementById('pendentesList');
             try {
                 const resp = await chamarApiAdmin('/api/compras');
-                const compras = await resp.json();
-                const pendentes = (compras || []).filter(c => c.status === 'pendente');
+                const compras = await lerRespostaApi(resp);
+                if (!Array.isArray(compras)) throw new Error('O servidor não devolveu a lista de compras.');
+                const pendentes = compras.filter(c => c.status === 'pendente');
 
                 if (pendentes.length === 0) {
                     container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Nenhum pagamento pendente no momento 🎉</p>';
@@ -537,7 +568,7 @@
                 `).join('');
             } catch (err) {
                 console.error(err);
-                container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar pagamentos pendentes</p>';
+                container.innerHTML = mensagemErroAba('Não foi possível carregar os pagamentos pendentes', err);
             }
         }
 
@@ -550,8 +581,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status: 'recusada' }),
                 });
-                const dados = await resp.json();
-                if (!resp.ok) throw new Error(dados.erro);
+                await lerRespostaApi(resp);
 
                 carregarPendentes();
                 carregarCompras();
@@ -570,8 +600,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, status: 'confirmada' }),
                 });
-                const dados = await resp.json();
-                if (!resp.ok) throw new Error(dados.erro);
+                await lerRespostaApi(resp);
 
                 carregarPendentes();
                 carregarCompras();
@@ -586,9 +615,10 @@
             const tbody = document.getElementById('comprasTableBody');
             try {
                 const resp = await chamarApiAdmin('/api/compras');
-                const compras = await resp.json();
+                const compras = await lerRespostaApi(resp);
+                if (!Array.isArray(compras)) throw new Error('O servidor não devolveu a lista de compras.');
 
-                if (!compras || compras.length === 0) {
+                if (compras.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Nenhuma compra registada ainda</td></tr>';
                     return;
                 }
@@ -605,7 +635,7 @@
                 `).join('');
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-red-500">Erro ao carregar compras</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6">${mensagemErroAba('Não foi possível carregar as compras', err)}</td></tr>`;
             }
         }
 
@@ -646,9 +676,10 @@
             const list = document.getElementById('feedbacksList');
             try {
                 const resp = await chamarApiAdmin('/api/feedback');
-                const feedbacks = await resp.json();
+                const feedbacks = await lerRespostaApi(resp);
+                if (!Array.isArray(feedbacks)) throw new Error('O servidor não devolveu a lista de feedbacks.');
 
-                if (!feedbacks || feedbacks.length === 0) {
+                if (feedbacks.length === 0) {
                     list.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">Nenhum feedback recebido ainda</p>';
                     return;
                 }
@@ -665,7 +696,7 @@
                 `).join('');
             } catch (err) {
                 console.error(err);
-                list.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar feedbacks</p>';
+                list.innerHTML = mensagemErroAba('Não foi possível carregar os feedbacks', err);
             }
         }
 
