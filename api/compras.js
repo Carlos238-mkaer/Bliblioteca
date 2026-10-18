@@ -1,14 +1,30 @@
 import { neon } from '@neondatabase/serverless';
-import { exigirAdmin } from '../lib/auth-admin.js';
 
 const sql = neon(process.env.DATABASE_URL);
+
+// Carrega o verificador de administrador só quando a rota exige. Assim, se ele falhar
+// ao iniciar (arquivo no lugar errado, pacote faltando...), os clientes não são afetados.
+async function verificarAdmin(req, res) {
+  try {
+    const { exigirAdmin } = await import('../lib/auth-admin.js');
+    return await exigirAdmin(req, res);
+  } catch (e) {
+    console.error('Falha ao carregar lib/auth-admin.js:', e);
+    res.status(500).json({
+      erro: 'O verificador de administrador não pôde ser carregado no servidor',
+      codigo: 'verificador_indisponivel',
+      detalhe: e.message
+    });
+    return false;
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { cliente_id } = req.query;
 
     // A lista de TODAS as compras (com nomes e e-mails) é só para o administrador
-    if (!cliente_id && !(await exigirAdmin(req, res))) return;
+    if (!cliente_id && !(await verificarAdmin(req, res))) return;
 
     try {
       const compras = cliente_id
@@ -53,7 +69,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    if (!(await exigirAdmin(req, res))) return;
+    if (!(await verificarAdmin(req, res))) return;
 
     const { id, status } = req.body || {};
 
