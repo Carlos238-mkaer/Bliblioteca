@@ -220,9 +220,20 @@
                 </div>
 
                 <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-4">Livros cadastrados</h2>
+
+                <div class="sticky top-2 z-10 mb-4 max-w-xl">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input type="text" id="buscaLivros" oninput="filtrarLivrosAdmin()" onkeydown="if (event.key === 'Escape') limparBuscaLivros()" autocomplete="off" placeholder="Buscar por título, autor, gênero ou coleção..." class="w-full text-xs pl-9 pr-9 py-2.5 rounded-xl border border-cream-200 bg-white shadow-xs focus:ring-2 focus:ring-sage-500/40 outline-none">
+                        <button type="button" id="buscaLivrosLimpar" onclick="limparBuscaLivros()" aria-label="Limpar busca" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+                    </div>
+                    <p id="buscaLivrosContagem" class="text-[11px] text-gray-400 mt-1.5 pl-1"></p>
+                </div>
+
                 <div id="livrosAdminList" class="space-y-4">
                     <p class="text-xs text-gray-400 text-center">A carregar...</p>
                 </div>
+                <p id="buscaLivrosVazio" class="hidden text-xs text-gray-400 text-center py-8"></p>
             </section>
 
             <!-- Aba: Banners -->
@@ -1282,6 +1293,7 @@
                 if (insertError) throw insertError;
 
                 document.getElementById('addBookForm').reset();
+                document.getElementById('buscaLivros').value = '';
                 carregarLivrosAdmin();
             } catch (err) {
                 console.error(err);
@@ -1290,6 +1302,53 @@
                 btn.disabled = false;
                 btn.textContent = textoOriginal;
             }
+        }
+
+        // ---------- Livros: busca na lista ----------
+        // Ignora maiúsculas e acentos ("acao" encontra "Ação")
+        function normalizarBusca(texto) {
+            return String(texto ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        // O que cada livro "responde" na busca: título, autor, gênero, coleção e os selos
+        function textoBuscaLivro(livro) {
+            return normalizarBusca([
+                livro.titulo, livro.autor, livro.genero, livro.colecao,
+                livro.exclusivo ? 'exclusivo' : '',
+                livro.destaque ? 'destaque' : ''
+            ].join(' '));
+        }
+
+        // Esconde os livros que não combinam, sem redesenhar a lista (não perde formulários abertos)
+        function filtrarLivrosAdmin() {
+            const campo = document.getElementById('buscaLivros');
+            const termos = normalizarBusca(campo.value).split(/\s+/).filter(Boolean);
+            document.getElementById('buscaLivrosLimpar').classList.toggle('hidden', campo.value === '');
+
+            const cartoes = [...document.querySelectorAll('#livrosAdminList [data-busca]')];
+            let visiveis = 0;
+            cartoes.forEach(cartao => {
+                const combina = termos.every(t => cartao.dataset.busca.includes(t));
+                cartao.classList.toggle('hidden', !combina);
+                if (combina) visiveis++;
+            });
+
+            const total = cartoes.length;
+            const plural = n => `${n} livro${n === 1 ? '' : 's'}`;
+            document.getElementById('buscaLivrosContagem').textContent =
+                total === 0 ? '' : (termos.length === 0 ? plural(total) : `${visiveis} de ${plural(total)}`);
+
+            const vazio = document.getElementById('buscaLivrosVazio');
+            const nadaEncontrado = total > 0 && termos.length > 0 && visiveis === 0;
+            vazio.classList.toggle('hidden', !nadaEncontrado);
+            vazio.textContent = nadaEncontrado ? `Nenhum livro encontrado para "${campo.value.trim()}".` : '';
+        }
+
+        function limparBuscaLivros() {
+            const campo = document.getElementById('buscaLivros');
+            campo.value = '';
+            filtrarLivrosAdmin();
+            campo.focus();
         }
 
         // ---------- Livros: listar + adicionar partes ----------
@@ -1307,6 +1366,7 @@
 
                 if (!livros || livros.length === 0) {
                     container.innerHTML = '<p class="text-xs text-gray-400 text-center">Nenhum livro cadastrado ainda</p>';
+                    filtrarLivrosAdmin();
                     return;
                 }
 
@@ -1317,7 +1377,7 @@
                     const ehExclusivo = !!livro.exclusivo;
 
                     return `
-                        <div class="bg-white rounded-xl border ${ehExclusivo ? 'border-amber-400 ring-1 ring-amber-200' : (emDestaque ? 'border-emerald-400 ring-1 ring-emerald-200' : 'border-cream-200')} p-4 shadow-2xs">
+                        <div data-busca="${escapeHtml(textoBuscaLivro(livro))}" class="bg-white rounded-xl border ${ehExclusivo ? 'border-amber-400 ring-1 ring-amber-200' : (emDestaque ? 'border-emerald-400 ring-1 ring-emerald-200' : 'border-cream-200')} p-4 shadow-2xs">
 
                             <!-- Cabeçalho: só o essencial -->
                             <div class="flex items-start gap-3">
@@ -1422,6 +1482,8 @@
                         </div>
                     `;
                 }).join('');
+
+                filtrarLivrosAdmin();
             } catch (err) {
                 console.error(err);
                 container.innerHTML = '<p class="text-xs text-red-500 text-center">Erro ao carregar livros</p>';
