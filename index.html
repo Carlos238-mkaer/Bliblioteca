@@ -1730,12 +1730,23 @@
             return /^https?:\/\//i.test(u) ? u : '';
         }
 
+        // Extrai o código do vídeo de links do YouTube (watch, youtu.be, shorts, embed)
+        function idYoutube(url) {
+            const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+            return m ? m[1] : null;
+        }
+
         function tipoDaPrevia(url) {
             let caminho = '';
             try { caminho = new URL(url, location.href).pathname.toLowerCase(); }
             catch (e) { caminho = String(url).toLowerCase(); }
             if (/\.pdf$/.test(caminho)) return 'pdf';
-            if (/\.(png|jpe?g|webp|gif|avif)$/.test(caminho)) return 'imagem';
+            if (/\.(png|jpe?g|webp|gif|avif|svg|bmp)$/.test(caminho)) return 'imagem';
+            if (/\.(mp4|webm|ogv|mov|m4v)$/.test(caminho)) return 'video';
+            if (/\.(mp3|wav|ogg|oga|m4a|aac|flac)$/.test(caminho)) return 'audio';
+            if (/\.(txt|md|csv|log|json)$/.test(caminho)) return 'texto';
+            if (/\.(docx?|pptx?|xlsx?)$/.test(caminho)) return 'office';
+            if (idYoutube(url)) return 'youtube';
             if (/drive\.google\.com\/file\/d\/[^/?#]+/.test(url)) return 'drive';
             return 'outro';
         }
@@ -1834,8 +1845,55 @@
                 } else if (tipo === 'drive') {
                     const id = url.match(/\/file\/d\/([^/?#]+)/)[1];
                     corpo.innerHTML = `<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" class="w-full h-full rounded-lg border-0 bg-white" allow="autoplay"></iframe>`;
+                } else if (tipo === 'youtube') {
+                    corpo.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(idYoutube(url))}" class="w-full h-full rounded-lg border-0 bg-black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+                } else if (tipo === 'video') {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.setAttribute('playsinline', '');
+                    video.preload = 'metadata';
+                    video.src = url;
+                    video.className = 'w-full max-h-full mx-auto rounded-lg bg-black';
+                    video.addEventListener('error', () => {
+                        if (token === previaToken) mostrarMensagemPrevia('Não foi possível reproduzir este vídeo aqui dentro. Você pode abri-lo em outra aba.', urlFora);
+                    });
+                    corpo.innerHTML = '';
+                    corpo.appendChild(video);
+                } else if (tipo === 'audio') {
+                    const caixa = document.createElement('div');
+                    caixa.className = 'h-full flex flex-col items-center justify-center gap-4 px-4';
+                    caixa.innerHTML = `
+                        <div class="w-14 h-14 bg-sage-100 text-sage-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="headphones" class="w-7 h-7"></i>
+                        </div>
+                        <p class="serif-font text-base text-warmgray-800 text-center">${escapeHtml(livro.titulo)}</p>`;
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.preload = 'metadata';
+                    audio.src = url;
+                    audio.className = 'w-full max-w-md';
+                    audio.addEventListener('error', () => {
+                        if (token === previaToken) mostrarMensagemPrevia('Não foi possível reproduzir este áudio aqui dentro. Você pode abri-lo em outra aba.', urlFora);
+                    });
+                    caixa.appendChild(audio);
+                    corpo.innerHTML = '';
+                    corpo.appendChild(caixa);
+                    lucide.createIcons();
+                } else if (tipo === 'texto') {
+                    const resposta = await fetch(url);
+                    if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+                    let texto = await resposta.text();
+                    if (token !== previaToken) return;
+                    const LIMITE_TEXTO = 300000;
+                    const cortado = texto.length > LIMITE_TEXTO;
+                    if (cortado) texto = texto.slice(0, LIMITE_TEXTO);
+                    corpo.innerHTML = '<pre class="whitespace-pre-wrap break-words text-xs leading-relaxed text-warmgray-800 bg-white rounded-lg border border-cream-200 p-4"></pre>' +
+                        (cortado ? '<p class="text-[11px] text-gray-400 text-center mt-3">A prévia mostra só o começo do texto.</p>' : '');
+                    corpo.querySelector('pre').textContent = texto;   // texto puro: nunca vira HTML
+                } else if (tipo === 'office' && urlFora) {
+                    corpo.innerHTML = `<iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(urlFora)}" class="w-full h-full rounded-lg border-0 bg-white"></iframe>`;
                 } else {
-                    mostrarMensagemPrevia('Esta prévia está em um formato que não abre aqui dentro (como EPUB). Você pode abri-la em outra aba.', urlFora);
+                    mostrarMensagemPrevia('Este tipo de arquivo (como EPUB ou ZIP) não abre aqui dentro. Você pode abri-lo ou baixá-lo em outra aba.', urlFora);
                 }
             } catch (err) {
                 if (token !== previaToken) return;
