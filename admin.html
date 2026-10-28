@@ -197,10 +197,11 @@
                         <input type="text" id="bookColecao" placeholder="Coleção/Saga (opcional, ex: Trilogia do Reino)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <input type="number" id="bookPreco" required step="0.01" min="0.01" placeholder="Preço do livro (ex: 29.90)" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
                         <div>
-                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Prévia do livro (opcional — use um PDF com as primeiras páginas; ele abre dentro do site e fica público. EPUB só abre em outra aba)</label>
-                            <input type="file" id="bookPreviaArquivo" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                            <label class="block text-xs font-medium text-warmgray-700 mb-1">Prévia do livro (opcional — fica pública, sem precisar comprar)</label>
+                            <input type="file" id="bookPreviaArquivo" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
                             <p class="text-[11px] text-gray-400 my-1 text-center">— ou —</p>
                             <input type="url" id="bookPreviaUrl" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none">
+                            <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Aceita qualquer tipo de arquivo. Abre dentro do site: PDF, imagem, vídeo, áudio, texto, documentos do Office (Word, PowerPoint, Excel) e links do YouTube ou do Google Drive. Outros formatos (EPUB, ZIP...) o cliente abre ou baixa em outra aba.</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-warmgray-700 mb-1">Capa do livro</label>
@@ -712,22 +713,82 @@
         }
 
         // ---------- Livros: função auxiliar para resolver a capa (arquivo OU link) ----------
+        // ---------- Envio de arquivos (tamanho, nome seguro e erros explicados) ----------
+        const LIMITE_UPLOAD_MB = 50;   // limite por arquivo no plano gratuito do Supabase
+
+        function formatarMB(bytes) {
+            return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+        }
+
+        // Nome seguro para guardar: sem acentos, espaços ou símbolos (que podem ser recusados)
+        function nomeSeguroArquivo(nome) {
+            const ponto = nome.lastIndexOf('.');
+            const base = ponto > 0 ? nome.slice(0, ponto) : nome;
+            const extensao = ponto > 0 ? nome.slice(ponto + 1) : '';
+            const limpar = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const baseLimpa = limpar(base).slice(0, 80) || 'arquivo';
+            const extLimpa = limpar(extensao).slice(0, 10);
+            return `${Date.now()}-${baseLimpa}${extLimpa ? '.' + extLimpa : ''}`;
+        }
+
+        // Arquivo acima do limite do plano gratuito: avisa antes de gastar tempo enviando
+        function confirmarTamanhoArquivo(arquivo) {
+            if (arquivo.size / (1024 * 1024) <= LIMITE_UPLOAD_MB) return true;
+            return confirm(
+                `"${arquivo.name}" tem ${formatarMB(arquivo.size)}.\n\n` +
+                `No plano gratuito do Supabase o limite é de ${LIMITE_UPLOAD_MB} MB por arquivo, e o envio costuma falhar acima disso. ` +
+                `Dica: divida o livro em mais partes menores.\n\nTentar enviar mesmo assim?`
+            );
+        }
+
+        // Traduz o erro técnico do envio para algo que dá para entender e resolver
+        function explicarErroEnvio(err, arquivo) {
+            const msg = String((err && err.message) || err || '');
+            const tamanho = arquivo ? ` (${formatarMB(arquivo.size)})` : '';
+            let explicacao;
+
+            if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) {
+                explicacao = `A conexão foi interrompida ao enviar o arquivo${tamanho}. Isso costuma acontecer quando o arquivo passa do limite de ${LIMITE_UPLOAD_MB} MB do plano gratuito do Supabase, quando a internet oscila durante o envio ou quando uma extensão do navegador bloqueia a conexão. Tente de novo; se continuar, use um arquivo menor (divida o livro em mais partes).`;
+            } else if (/exceeded the maximum allowed size|payload too large|\b413\b/i.test(msg)) {
+                explicacao = `O arquivo${tamanho} é maior do que o Supabase aceita (${LIMITE_UPLOAD_MB} MB no plano gratuito). Divida o livro em partes menores.`;
+            } else if (/bucket not found/i.test(msg)) {
+                explicacao = 'A pasta de destino não existe no Storage do Supabase. Confira se os buckets "capas-livros" e "arquivos-livros" foram criados.';
+            } else if (/jwt|expired/i.test(msg)) {
+                explicacao = 'Sua sessão expirou. Clique em Sair, entre de novo no painel e tente outra vez.';
+            } else if (/row-level security|violates|permission|not authorized|unauthorized/i.test(msg)) {
+                explicacao = 'O Supabase recusou o envio por falta de permissão. Confira se você entrou como administrador e se o arquivo seguranca-admin.sql foi rodado por completo (ele inclui as permissões do Storage).';
+            } else if (/mime|not allowed|invalid.*type/i.test(msg)) {
+                explicacao = 'Este tipo de arquivo não é aceito neste bucket do Storage.';
+            } else {
+                explicacao = 'Não foi possível enviar o arquivo.';
+            }
+            return `${explicacao}\n\nDetalhe técnico: ${msg || 'sem mensagem'}`;
+        }
+
+        // Envia o arquivo e devolve o caminho em que ele ficou guardado
+        async function enviarArquivoStorage(bucket, arquivo) {
+            const caminho = nomeSeguroArquivo(arquivo.name);
+            const { error } = await supabaseClient
+                .storage
+                .from(bucket)
+                .upload(caminho, arquivo, { cacheControl: '3600', upsert: false });
+
+            if (error) throw error;
+            return caminho;
+        }
+
+        // Capas, banners e prévias: envia o arquivo (bucket público) OU usa o link colado
         async function resolverUrlCapa(arquivo, urlExterna) {
             if (arquivo) {
-                const nomeCapa = `${Date.now()}-${arquivo.name}`;
-                const { error: uploadError } = await supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .upload(nomeCapa, arquivo);
-
-                if (uploadError) throw uploadError;
-
-                const { data } = supabaseClient
-                    .storage
-                    .from('capas-livros')
-                    .getPublicUrl(nomeCapa);
-
-                return data.publicUrl;
+                if (!confirmarTamanhoArquivo(arquivo)) throw new Error('Envio cancelado.');
+                try {
+                    const caminho = await enviarArquivoStorage('capas-livros', arquivo);
+                    const { data } = supabaseClient.storage.from('capas-livros').getPublicUrl(caminho);
+                    return data.publicUrl;
+                } catch (err) {
+                    throw new Error(explicarErroEnvio(err, arquivo));
+                }
             }
 
             if (urlExterna) {
@@ -1448,11 +1509,21 @@
                                 </form>
 
                                 <form id="previaForm-${livro.id}" onsubmit="handlePrevia(event, '${livro.id}')" class="hidden space-y-2 pt-1">
-                                    <input type="file" id="previaArquivo-${livro.id}" accept=".pdf,.epub" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+                                    ${livro.previa_url ? `
+                                    <div class="flex items-center gap-3 bg-cream-50 rounded-lg px-3 py-2 text-xs">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] uppercase tracking-wider text-gray-400">Prévia atual · ${escapeHtml(rotuloTipoPrevia(livro.previa_url))}</p>
+                                            <p class="truncate text-warmgray-800">${escapeHtml(nomeAmigavelPrevia(livro.previa_url))}</p>
+                                        </div>
+                                        ${urlHttpAdmin(livro.previa_url) ? `<a href="${escapeHtml(urlHttpAdmin(livro.previa_url))}" target="_blank" rel="noopener" class="text-sage-600 hover:underline whitespace-nowrap">Ver</a>` : ''}
+                                        <button type="button" onclick="removerPrevia('${livro.id}')" class="text-red-600 hover:underline whitespace-nowrap">Excluir prévia</button>
+                                    </div>` : `<p class="text-[11px] text-gray-400">Este livro ainda não tem prévia.</p>`}
+                                    <input type="file" id="previaArquivo-${livro.id}" class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
                                     <p class="text-[11px] text-gray-400 text-center">— ou —</p>
                                     <input type="url" id="previaUrlInput-${livro.id}" placeholder="Cole o link de um arquivo" class="w-full text-xs p-2 rounded-lg border border-cream-200 outline-none">
+                                    <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Aceita qualquer tipo de arquivo. Abre dentro do site: PDF, imagem, vídeo, áudio, texto, documentos do Office (Word, PowerPoint, Excel) e links do YouTube ou do Google Drive. Outros formatos (EPUB, ZIP...) o cliente abre ou baixa em outra aba.</p>
                                     <button type="submit" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2 rounded-lg transition">
-                                        Salvar prévia
+                                        ${livro.previa_url ? 'Trocar prévia' : 'Salvar prévia'}
                                     </button>
                                 </form>
                             </div>
@@ -1589,9 +1660,11 @@
                 return;
             }
 
+            const anterior = (livrosAdminCache.find(l => l.id === livroId) || {}).previa_url || null;
+
             btn.disabled = true;
             const textoOriginal = btn.textContent;
-            btn.textContent = 'Salvando...';
+            btn.textContent = arquivo ? `Enviando (${formatarMB(arquivo.size)})...` : 'Salvando...';
 
             try {
                 const novaUrl = await resolverUrlCapa(arquivo, url);
@@ -1603,12 +1676,111 @@
 
                 if (error) throw error;
 
+                // A prévia nova já está salva: o arquivo da antiga não serve mais (se estiver só aqui)
+                if (anterior && anterior !== novaUrl) await apagarArquivoPublico(anterior, livroId);
+
                 carregarLivrosAdmin();
             } catch (err) {
                 console.error(err);
                 alert(err.message || 'Erro ao salvar a prévia');
                 btn.disabled = false;
                 btn.textContent = textoOriginal;
+            }
+        }
+
+        // ---------- Prévia: excluir e limpar arquivo antigo ----------
+        function urlHttpAdmin(url) {
+            const u = String(url || '').trim();
+            return /^https?:\/\//i.test(u) ? u : '';
+        }
+
+        // Caminho do arquivo dentro do bucket, se o link for de um arquivo guardado aqui no Supabase
+        function caminhoNoStorage(url, bucket) {
+            const m = String(url || '').match(new RegExp('/storage/v1/object/public/' + bucket + '/([^?#]+)'));
+            if (!m) return null;
+            try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+        }
+
+        function nomeAmigavelPrevia(url) {
+            const caminho = caminhoNoStorage(url, 'capas-livros');
+            const bruto = caminho || String(url || '').split(/[?#]/)[0].split('/').filter(Boolean).pop() || String(url || '');
+            let nome = bruto;
+            try { nome = decodeURIComponent(bruto); } catch (e) {}
+            return nome.replace(/^\d{10,}-/, '') || nome;   // tira o número que o painel põe na frente
+        }
+
+        function rotuloTipoPrevia(url) {
+            const u = String(url || '').toLowerCase();
+            const caminho = u.split(/[?#]/)[0];
+            if (/youtube\.com|youtu\.be/.test(u)) return 'vídeo do YouTube';
+            if (/drive\.google\.com/.test(u)) return 'Google Drive';
+            if (/\.pdf$/.test(caminho)) return 'PDF';
+            if (/\.(png|jpe?g|webp|gif|avif|svg|bmp)$/.test(caminho)) return 'imagem';
+            if (/\.(mp4|webm|ogv|mov|m4v)$/.test(caminho)) return 'vídeo';
+            if (/\.(mp3|wav|ogg|oga|m4a|aac|flac)$/.test(caminho)) return 'áudio';
+            if (/\.(txt|md|csv|log|json)$/.test(caminho)) return 'texto';
+            if (/\.(docx?|pptx?|xlsx?)$/.test(caminho)) return 'documento do Office';
+            if (/\.epub$/.test(caminho)) return 'EPUB (abre em outra aba)';
+            return 'arquivo (abre em outra aba)';
+        }
+
+        // O mesmo arquivo pode estar sendo usado em outro lugar (capa, banner, outra prévia)?
+        async function arquivoEmUso(url, livroIgnorado) {
+            const consultas = [
+                supabaseClient.from('livros').select('id').eq('capa_url', url),
+                supabaseClient.from('livros').select('id').eq('previa_url', url).neq('id', livroIgnorado),
+                supabaseClient.from('banners').select('id').eq('imagem_url', url)
+            ];
+            for (const consulta of consultas) {
+                const { data, error } = await consulta;
+                if (error) return true;                       // na dúvida, NÃO apaga
+                if (data && data.length > 0) return true;
+            }
+            return false;
+        }
+
+        // Tenta apagar o arquivo antigo do Storage. Devolve: 'ok' | 'externo' | 'em_uso' | 'falhou'
+        async function apagarArquivoPublico(url, livroIgnorado) {
+            const caminho = caminhoNoStorage(url, 'capas-livros');
+            if (!caminho) return 'externo';                   // link de outro site: não há o que apagar aqui
+
+            try {
+                if (await arquivoEmUso(url, livroIgnorado)) return 'em_uso';
+                const { data, error } = await supabaseClient.storage.from('capas-livros').remove([caminho]);
+                if (error) throw error;
+                // Lista vazia = o Supabase não apagou nada (normalmente falta a permissão de excluir)
+                return Array.isArray(data) && data.length > 0 ? 'ok' : 'falhou';
+            } catch (err) {
+                console.warn('Não foi possível apagar o arquivo antigo:', err.message || err);
+                return 'falhou';
+            }
+        }
+
+        async function removerPrevia(livroId) {
+            const livro = livrosAdminCache.find(l => l.id === livroId);
+            if (!livro || !livro.previa_url) return;
+
+            if (!confirm(`Excluir a prévia de "${livro.titulo}"?\n\nO botão "Ler prévia" deixa de aparecer no catálogo.`)) return;
+
+            const urlAntiga = livro.previa_url;   // guarda antes de limpar, para saber qual arquivo apagar
+
+            try {
+                const { error } = await supabaseClient
+                    .from('livros')
+                    .update({ previa_url: null })
+                    .eq('id', livroId);
+                if (error) throw error;
+            } catch (err) {
+                console.error(err);
+                alert(err.message || 'Erro ao excluir a prévia');
+                return;
+            }
+
+            const resultado = await apagarArquivoPublico(urlAntiga, livroId);
+            await carregarLivrosAdmin();
+
+            if (resultado === 'falhou') {
+                alert('A prévia foi excluída do livro. Só não foi possível apagar o arquivo antigo do Supabase (ele fica guardado sem uso). Para a limpeza automática funcionar, rode o arquivo storage-excluir.sql no SQL Editor.');
             }
         }
 
@@ -1694,21 +1866,21 @@
                 alert('Selecione o arquivo (PDF ou EPUB) dessa parte');
                 return;
             }
+            if (!confirmarTamanhoArquivo(arquivo)) return;
 
             btn.disabled = true;
             const textoOriginal = btn.textContent;
-            btn.textContent = 'Enviando...';
+            btn.textContent = `Enviando (${formatarMB(arquivo.size)})...`;
 
             try {
-                const nomeArquivo = `${Date.now()}-${arquivo.name}`;
-                const { error: uploadError } = await supabaseClient
-                    .storage
-                    .from('arquivos-livros')
-                    .upload(nomeArquivo, arquivo);
+                let nomeArquivo;
+                try {
+                    nomeArquivo = await enviarArquivoStorage('arquivos-livros', arquivo);
+                } catch (errEnvio) {
+                    throw new Error(explicarErroEnvio(errEnvio, arquivo));
+                }
 
-                if (uploadError) throw uploadError;
-
-                // Guardamos só o CAMINHO do arquivo (o bucket é privado agora,
+                // Guardamos só o CAMINHO do arquivo (o bucket é privado,
                 // o link de leitura é gerado na hora, pelo backend, só pra quem comprou)
                 const { error: insertError } = await supabaseClient
                     .from('partes_livro')
@@ -1720,7 +1892,9 @@
                         arquivo_url: nomeArquivo
                     }]);
 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    throw new Error(`O arquivo foi enviado, mas a parte não foi registrada no livro.\n\nDetalhe técnico: ${insertError.message}`);
+                }
 
                 carregarLivrosAdmin();
             } catch (err) {
