@@ -804,6 +804,7 @@
 
     <!-- Cliente Supabase (precisa vir ANTES do script principal abaixo) -->
     <script src="supabase.js"></script>
+    <script src="camaleao.js"></script>
 
     <script>
         // ---------- Estado global ----------
@@ -2196,6 +2197,7 @@
         }
 
         async function iniciar() {
+            if (window.Camaleao && Camaleao.ativo()) { Camaleao.iniciarDemo(); return; }
             try { aplicarConfiguracoes(JSON.parse(localStorage.getItem('config_site') || '{}')); } catch (e) {}
             carregarConfiguracoes();
             carregarBanners();
