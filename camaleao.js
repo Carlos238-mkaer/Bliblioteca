@@ -47,7 +47,37 @@
     { id: 'floricultura', nome: 'Floricultura', emoji: '🌸', icone: 'flower-2', cor: '#c2578a', selo: 'Flores fresquinhas', titulo: '{nome}: flores para cada momento.', sub: 'Buquês, plantas e presentes entregues com todo o cuidado.', frase: 'Uma flor diz o que palavras não dizem.', cats: ['Buquês', 'Plantas', 'Presentes'],
       p: ['💐|Buquê de rosas|12 rosas vermelhas|120|0', '🌻|Girassóis|Buquê alegre|85|0', '🪴|Suculenta|Vaso decorado|35|1', '🌿|Samambaia|Pede pouca luz|48|1', '🎁|Cesta presente|Flores e chocolates|160|2', '🕯️|Vela aromática|Lavanda|38|2'] },
     { id: 'academia', nome: 'Academia', emoji: '🏋️', icone: 'dumbbell', cor: '#d9562b', selo: 'Comece hoje mesmo', titulo: '{nome}: treine do seu jeito.', sub: 'Planos flexíveis, aulas em grupo e acompanhamento de perto.', frase: 'O primeiro passo é aparecer.', cats: ['Planos', 'Aulas', 'Suplementos'],
-      p: ['🏋️|Plano mensal|Acesso livre|119.9|0', '📅|Plano trimestral|Melhor preço|299.9|0', '🧘|Aula de yoga|Turma pequena|35|1', '🚴|Spinning|Aula em grupo|30|1', '🥤|Whey protein|900 g|129.9|2', '💊|Creatina|300 g|89.9|2'] }
+      p: ['🏋️|Plano mensal|Acesso livre|119.9|0', '📅|Plano trimestral|Melhor preço|299.9|0', '🧘|Aula de yoga|Turma pequena|35|1', '🚴|Spinning|Aula em grupo|30|1', '🥤|Whey protein|900 g|129.9|2', '💊|Creatina|300 g|89.9|2'] },
+    { id: 'hamburgueria', nome: 'Hamburgueria', emoji: '🍔', icone: 'beef', cor: '#c2410c', selo: 'Artesanal de verdade', titulo: '{nome}: hambúrguer artesanal sem frescura.', sub: 'Blends da casa, batata crocante e molhos especiais.', frase: 'Sabor que a gente nunca esquece.', cats: ['Burgers', 'Porções', 'Bebidas'],
+      p: ['🍔|Clássico da casa|Blend 160g, queijo e molho|32|0', '🥓|Bacon burger|Com bacon crocante|38|0', '🍔|Duplo cheddar|Dois blends e cheddar|44|0', '🍟|Batata frita|Porção crocante|22|1', '🧅|Onion rings|Empanadas na hora|24|1', '🥤|Refrigerante|Lata 350 ml|7|2'] },
+    { id: 'pizzaria', nome: 'Pizzaria', emoji: '🍕', icone: 'pizza', cor: '#b91c1c', selo: 'Massa de fermentação lenta', titulo: '{nome}: pizza quentinha, do forno à sua mesa.', sub: 'Sabores tradicionais e especiais, com entrega rápida.', frase: 'Pizza boa une a mesa.', cats: ['Salgadas', 'Doces', 'Bebidas'],
+      p: ['🍕|Margherita|Muçarela e manjericão|49|0', '🍕|Calabresa|Cebola e azeitonas|52|0', '🍕|Quatro queijos|Para os apaixonados|58|0', '🍫|Chocolate com morango|Pizza doce|54|1', '🍌|Banana com canela|Pizza doce|48|1', '🥤|Refrigerante 2L|Gelado|14|2'] },
+    { id: 'sorveteria', nome: 'Sorveteria e açaí', emoji: '🍨', icone: 'ice-cream-cone', cor: '#7e3fa8', selo: 'Gelado do jeito que você gosta', titulo: '{nome}: o doce que refresca o dia.', sub: 'Açaí, sorvetes artesanais e acompanhamentos à vontade.', frase: 'Felicidade em casquinha.', cats: ['Açaí', 'Sorvetes', 'Milkshakes'],
+      p: ['🍇|Açaí 300 ml|Com 3 acompanhamentos|18|0', '🍇|Açaí 500 ml|Com 3 acompanhamentos|26|0', '🍨|Sorvete 2 bolas|Casquinha ou copinho|14|1', '🍦|Sundae|Calda à escolha|16|1', '🥤|Milkshake|Chocolate ou morango|19|2', '🍓|Picolé artesanal|Frutas da estação|8|1'] },
+    { id: 'doceria', nome: 'Confeitaria', emoji: '🎂', icone: 'cake-slice', cor: '#d6639a', selo: 'Doces feitos com amor', titulo: '{nome}: doces para adoçar os seus momentos.', sub: 'Bolos, tortas e docinhos para festas e para o dia a dia.', frase: 'A vida fica mais doce.', cats: ['Bolos', 'Docinhos', 'Tortas'],
+      p: ['🎂|Bolo de aniversário|Recheio à escolha|120|0', '🍫|Brigadeiro gourmet|Cento|140|1', '🍓|Torta de morango|Fatia generosa|16|2', '🧁|Cupcake|Unidade decorada|9|0', '🍪|Cookie recheado|Unidade|10|1', '🍋|Torta de limão|Fatia|15|2'] },
+    { id: 'salao', nome: 'Salão de beleza', emoji: '💇', icone: 'sparkles', cor: '#9d4e8c', selo: 'Realce a sua beleza', titulo: '{nome}: cuidado e beleza para você.', sub: 'Cabelo e estética com profissionais de confiança. Agende pelo WhatsApp.', frase: 'Sinta-se incrível.', cats: ['Cabelo', 'Estética', 'Produtos'],
+      p: ['💇|Corte feminino|Com lavagem e finalização|90|0', '🎨|Coloração|Mão de obra|150|0', '💆|Escova modelada|Liso ou ondas|65|0', '🧖|Limpeza de pele|Sessão completa|120|1', '🧴|Shampoo profissional|300 ml|58|2', '💧|Hidratação|Tratamento profundo|80|0'] },
+    { id: 'unhas', nome: 'Estúdio de unhas', emoji: '💅', icone: 'gem', cor: '#e0568a', selo: 'Unhas impecáveis', titulo: '{nome}: unhas lindas, do seu jeito.', sub: 'Manicure, alongamento e nail art com todo o cuidado.', frase: 'Detalhes que fazem a diferença.', cats: ['Manicure', 'Alongamento', 'Cuidados'],
+      p: ['💅|Manicure simples|Esmaltação tradicional|35|0', '🦶|Pedicure|Com esfoliação|40|0', '✨|Esmaltação em gel|Dura até 21 dias|70|0', '💎|Alongamento em gel|Aplicação completa|160|1', '🎨|Nail art|Por unha|5|1', '🧴|Hidratação das mãos|Parafina|45|2'] },
+    { id: 'otica', nome: 'Ótica', emoji: '👓', icone: 'glasses', cor: '#2f6f8f', selo: 'Enxergue o melhor da vida', titulo: '{nome}: a sua visão em boas mãos.', sub: 'Armações, lentes e óculos de sol com atendimento especializado.', frase: 'Ver bem é viver melhor.', cats: ['Armações', 'Solares', 'Serviços'],
+      p: ['👓|Armação clássica|Acetato leve|289|0', '👓|Armação metal|Fina e resistente|349|0', '🕶️|Óculos de sol|Proteção UV400|259|1', '🕶️|Solar esportivo|Lente polarizada|329|1', '🔍|Lentes antirreflexo|Par, com tratamento|180|2', '🧼|Kit limpeza|Spray e flanela|25|2'] },
+    { id: 'papelaria', nome: 'Papelaria', emoji: '✏️', icone: 'pencil', cor: '#2563a8', selo: 'Tudo para criar e organizar', titulo: '{nome}: tudo para estudar, criar e organizar.', sub: 'Material escolar, escritório e presentes criativos.', frase: 'Ideias começam no papel.', cats: ['Escolar', 'Escritório', 'Presentes'],
+      p: ['📓|Caderno 10 matérias|Capa dura|34|0', '✏️|Kit canetas coloridas|12 cores|22|0', '🎒|Mochila escolar|Reforçada|129|0', '📎|Organizador de mesa|Madeira e metal|49|1', '🗂️|Pasta com elástico|Tamanho A4|9|1', '🎁|Agenda 2027|Planejamento semanal|42|2'] },
+    { id: 'hortifruti', nome: 'Hortifruti', emoji: '🍎', icone: 'apple', cor: '#4d8f2f', selo: 'Fresquinho da horta', titulo: '{nome}: frutas e verduras fresquinhas.', sub: 'Produtos selecionados todos os dias, direto para a sua mesa.', frase: 'Do campo para a sua casa.', cats: ['Frutas', 'Verduras', 'Cestas'],
+      p: ['🍎|Maçã|Preço por kg|9.9|0', '🍌|Banana prata|Preço por dúzia|7.5|0', '🥬|Alface crespa|Unidade|3.5|1', '🍅|Tomate|Preço por kg|8.9|1', '🥕|Cenoura|Preço por kg|5.9|1', '🧺|Cesta da semana|Frutas e legumes|59|2'] },
+    { id: 'oficina', nome: 'Oficina mecânica', emoji: '🔧', icone: 'wrench', cor: '#44546a', selo: 'O seu carro em boas mãos', titulo: '{nome}: cuidado de verdade com o seu carro.', sub: 'Revisão, freios, suspensão e muito mais, com transparência.', frase: 'Segurança em cada quilômetro.', cats: ['Revisão', 'Freios e suspensão', 'Elétrica'],
+      p: ['🛠️|Revisão completa|Mão de obra|220|0', '🛢️|Troca de óleo|Óleo e filtro à parte|90|0', '🛑|Pastilhas de freio|Dianteiras, mão de obra|150|1', '🚗|Alinhamento|Alinhar e balancear|120|1', '🔋|Troca de bateria|Instalação|60|2', '🔍|Diagnóstico eletrônico|Com scanner|110|2'] },
+    { id: 'tatuagem', nome: 'Estúdio de tatuagem', emoji: '🖋️', icone: 'pen-tool', cor: '#3b3b4f', selo: 'Arte na pele', titulo: '{nome}: a sua história desenhada na pele.', sub: 'Projetos autorais, biossegurança e atendimento com hora marcada.', frase: 'Arte que fica.', cats: ['Tatuagem', 'Piercing', 'Cuidados'],
+      p: ['🖋️|Tatuagem pequena|Até 5 cm|250|0', '🎨|Tatuagem média|Até 15 cm|600|0', '🌹|Fechamento de braço|Orçamento no WhatsApp|2500|0', '💎|Piercing de orelha|Joia inclusa|120|1', '✨|Piercing de nariz|Joia inclusa|140|1', '🧴|Pomada cicatrizante|Pós-tatuagem|45|2'] },
+    { id: 'odonto', nome: 'Clínica odontológica', emoji: '🦷', icone: 'smile', cor: '#168aad', selo: 'Cuidando do seu sorriso', titulo: '{nome}: o seu sorriso em boas mãos.', sub: 'Avaliação, limpeza, clareamento e tratamentos com conforto.', frase: 'Sorrir faz bem.', cats: ['Prevenção', 'Estética', 'Tratamentos'],
+      p: ['🦷|Consulta de avaliação|Primeira visita|90|0', '🪥|Limpeza|Profilaxia completa|150|0', '✨|Clareamento|Sessão em consultório|650|1', '😁|Lente de contato dental|Por dente|1200|1', '🔧|Restauração|Por dente|220|2', '📏|Aparelho ortodôntico|Mensalidade|180|2'] },
+    { id: 'idiomas', nome: 'Escola de idiomas', emoji: '🌍', icone: 'languages', cor: '#1d6fb8', selo: 'Fale outro idioma com confiança', titulo: '{nome}: aprenda um novo idioma de verdade.', sub: 'Aulas dinâmicas, turmas reduzidas e professores experientes.', frase: 'Novos idiomas, novas portas.', cats: ['Cursos', 'Aulas particulares', 'Preparatórios'],
+      p: ['📘|Inglês|Mensalidade, turma reduzida|289|0', '📗|Espanhol|Mensalidade, turma reduzida|289|0', '📕|Francês|Mensalidade, turma reduzida|299|0', '🎓|Aula particular|Valor por hora|110|1', '📝|Preparatório para prova|Mensalidade|320|2', '🗣️|Conversação|Aula em grupo|90|1'] },
+    { id: 'celulares', nome: 'Celulares e assistência', emoji: '📱', icone: 'smartphone', cor: '#4338ca', selo: 'Tecnologia com garantia', titulo: '{nome}: tecnologia e assistência de confiança.', sub: 'Aparelhos, acessórios e reparos com garantia.', frase: 'O seu celular em boas mãos.', cats: ['Aparelhos', 'Acessórios', 'Reparos'],
+      p: ['📱|Smartphone 128 GB|Lacrado, com garantia|1599|0', '🔌|Carregador rápido|20W com cabo|79|1', '🎧|Fone bluetooth|Bateria longa|129|1', '🛡️|Película de vidro|Com instalação|30|1', '🔧|Troca de tela|Com garantia|350|2', '🔋|Troca de bateria|Com garantia|180|2'] },
+    { id: 'outro', nome: 'Outro tipo de loja', emoji: '🛍️', icone: 'store', cor: '#4f6f8f', selo: 'Atendimento de verdade', titulo: '{nome}: qualidade e atendimento que você merece.', sub: 'Conheça os nossos produtos e serviços e peça de forma rápida pelo WhatsApp.', frase: 'Bem-vindo, a casa é sua.', cats: ['Destaques', 'Novidades'],
+      p: ['⭐|Produto destaque|O nosso mais pedido|59|0', '🛍️|Combo especial|Economize levando mais|99|0', '🎁|Kit presente|Pronto para presentear|79|0', '🆕|Lançamento|Acabou de chegar|69|1', '💡|Serviço personalizado|Fale com a gente|120|1', '🏷️|Oferta da semana|Por tempo limitado|49|1'] }
   ];
   const tipo = id => T.find(t => t.id === id) || T[0];
 
@@ -58,23 +88,41 @@
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
+  // Produtos personalizados: vêm no link (parâmetro d), então tudo é limpo aqui
+  const emo = e => { const v = String(e || '').trim().slice(0, 8); return v && !/[A-Za-z0-9<>&"'\\]/.test(v) ? v : '🛍️'; };
+  function lerCustom(d) {
+    if (!d) return null;
+    try {
+      const j = JSON.parse(decodeURIComponent(escape(atob(String(d).replace(/-/g, '+').replace(/_/g, '/')))));
+      const cats = (Array.isArray(j.c) ? j.c : []).map(c => limparTxt(c, 24)).filter(Boolean).slice(0, 5);
+      if (!cats.length) cats.push('Produtos');
+      const prods = (Array.isArray(j.p) ? j.p : []).slice(0, 12).map(a => ({
+        e: emo(a[0]), n: limparTxt(a[1], 40), d: limparTxt(a[2], 50),
+        v: Math.min(99999, Math.max(0, parseFloat(a[3]) || 0)),
+        k: Math.max(0, Math.min(cats.length - 1, parseInt(a[4], 10) || 0))
+      })).filter(p => p.n);
+      if (!prods.length) return null;
+      return { cats, prods, selo: limparTxt(j.s, 60), titulo: limparTxt(j.t, 90), sub: limparTxt(j.u, 160) };
+    } catch (e) { return null; }
+  }
+
   // A "ficha" da loja: tudo que a demonstração precisa
   function montarFicha(id, nome, cor, extra) {
-    const t = tipo(id), x = extra || {};
+    const t = tipo(id), x = extra || {}, k = lerCustom(x.d);
     nome = limparTxt(nome, 40) || t.nome;
     const c = /^#[0-9a-f]{6}$/i.test(cor || '') ? cor.toLowerCase() : t.cor;
+    const cats = k ? k.cats : t.cats;
+    const prods = k ? k.prods.map(p => [p.e, p.n, p.d, p.v, p.k]) : t.p.map(s => { const a = s.split('|'); return [a[0], a[1], a[2], parseFloat(a[3]), +a[4]]; });
     return {
-      nome, tipo: t.id, icone: t.icone, cats: t.cats, frase: t.frase,
+      nome, tipo: t.id, icone: t.icone, cats, frase: t.frase,
       wpp: limparFone(x.wpp), insta: limparInsta(x.insta), end: limparTxt(x.end, 90), hor: limparTxt(x.hor, 70),
       cfg: {
         cor_principal: c, cor_fundo: mix(c, '#ffffff', 0.95), cor_texto: mix(c, '#000000', 0.86),
         cor_fundo_escuro: mix(c, '#000000', 0.93), cor_texto_escuro: '#ece8e3',
-        nome_site: nome, hero_selo: t.selo, hero_titulo: t.titulo.replace('{nome}', nome), hero_subtitulo: t.sub
+        nome_site: nome, hero_selo: (k && k.selo) || t.selo,
+        hero_titulo: ((k && k.titulo) || t.titulo).replace('{nome}', nome), hero_subtitulo: (k && k.sub) || t.sub
       },
-      prods: t.p.map((s, i) => {
-        const [e, n, d, v, k] = s.split('|');
-        return { id: 'demo-' + (i + 1), titulo: n, autor: d, genero: t.cats[+k], preco: parseFloat(v), capa_url: capa(e, c, i) };
-      })
+      prods: prods.map((a, i) => ({ id: 'demo-' + (i + 1), titulo: a[1], autor: a[2], genero: cats[a[4]], preco: a[3], capa_url: capa(a[0], c, i) }))
     };
   }
 
@@ -115,12 +163,12 @@
     return achadas.map(r2h);
   }
 
-  async function reduzirFoto(arq) {
+  async function reduzirFoto(arq, max, qualidade) {
     const im = await abrirImagem(arq);
-    const e = Math.min(1, 900 / im.width), c = document.createElement('canvas');
+    const e = Math.min(1, (max || 900) / im.width), c = document.createElement('canvas');
     c.width = Math.round(im.width * e); c.height = Math.round(im.height * e);
     c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-    return c.toDataURL('image/jpeg', 0.72);
+    return c.toDataURL('image/jpeg', qualidade || 0.72);
   }
 
   function montarLink(base, o) {
@@ -131,6 +179,7 @@
     if (f.insta) u.searchParams.set('insta', f.insta);
     if (f.end) u.searchParams.set('end', f.end);
     if (f.hor) u.searchParams.set('hor', f.hor);
+    if (o.d) u.searchParams.set('d', o.d);
     if (o.foto) u.searchParams.set('foto', '1');
     return u.href;
   }
@@ -140,7 +189,7 @@
   // ---------- index.html: mostra a loja ----------
   function iniciarDemo() {
     const w = window, q = new URLSearchParams(location.search);
-    const f = montarFicha(q.get('demo'), q.get('nome'), q.get('cor'), { wpp: q.get('wpp'), insta: q.get('insta'), end: q.get('end'), hor: q.get('hor') });
+    const f = montarFicha(q.get('demo'), q.get('nome'), q.get('cor'), { wpp: q.get('wpp'), insta: q.get('insta'), end: q.get('end'), hor: q.get('hor'), d: q.get('d') });
     const s = slug(f.nome);
     const aviso = m => w.showNotification(m);
     const wa = m => 'https://wa.me/' + f.wpp + '?text=' + encodeURIComponent(m);
@@ -368,6 +417,8 @@
           <label class="block text-xs font-medium text-warmgray-700 mb-1">Fotos do lugar (até 5, opcional)</label>
           <input type="file" id="camFotos" accept="image/*" multiple class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
         </div>
+        <button type="button" id="camIA" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">✨ Ler as fotos com IA</button>
+        <p id="camIAMsg" class="hidden text-[11px] text-gray-400 leading-relaxed"></p>
         <div id="camCoresBox" class="hidden">
           <p id="camCoresMsg" class="text-[11px] text-gray-400 mb-2"></p>
           <div id="camSwatches" class="flex gap-2 flex-wrap"></div>
@@ -376,6 +427,11 @@
           <span>Cor principal da loja</span>
           <input type="color" id="camCor" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
         </label>
+        <div>
+          <label class="block text-xs font-medium text-warmgray-700 mb-1">Produtos da loja <span class="font-normal text-gray-400">(opcional, um por linha)</span></label>
+          <textarea id="camProdutos" rows="6" placeholder="🍕 Pizza Calabresa | Molho da casa | 52,00 | Pizzas" class="${campo} font-mono"></textarea>
+          <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Formato: emoji nome | descrição | preço | categoria. Se deixar vazio, a demo usa produtos de exemplo do tipo de loja.</p>
+        </div>
         <button type="button" id="camGerar" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">Gerar demonstração</button>
         <div id="camResultado" class="hidden space-y-2 pt-3 border-t border-cream-100">
           <a id="camAbrir" target="_blank" rel="noopener" class="block text-center bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition">Abrir demonstração</a>
@@ -386,7 +442,7 @@
     main.appendChild(sec);
 
     const $ = id => sec.querySelector('#' + id);
-    let foto = null, cores = 0, link = '';
+    let foto = null, cores = 0, link = '', iaTxt = null;
     $('camTipo').innerHTML = T.map(t => '<option value="' + t.id + '">' + t.emoji + ' ' + t.nome + '</option>').join('');
     $('camCor').value = T[0].cor;
     $('camTipo').addEventListener('change', () => { if (!cores) $('camCor').value = tipo($('camTipo').value).cor; });
@@ -412,12 +468,64 @@
       } catch (err) { alert(err.message || 'Não foi possível ler as fotos.'); }
     });
 
+    // Lê as linhas da caixa de produtos e monta o parâmetro "d" do link
+    function montarD() {
+      const linhas = $('camProdutos').value.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 12);
+      const cats = [], p = [];
+      linhas.forEach(l => {
+        const c = l.split('|').map(x => x.trim());
+        const m = /^(\p{Extended_Pictographic}[\uFE0F\u200D\p{Extended_Pictographic}]*)?\s*(.*)$/u.exec(c[0] || '');
+        const nome = (m && m[2]) || '';
+        if (!nome) return;
+        const preco = parseFloat(String(c[2] || '').replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+        const cat = limparTxt(c[3], 24) || 'Produtos';
+        if (!cats.includes(cat)) cats.push(cat);
+        p.push([(m && m[1]) || '🛍️', nome, c[1] || '', preco, cats.indexOf(cat)]);
+      });
+      if (!p.length) return '';
+      const j = { p, c: cats };
+      if (iaTxt) { j.s = iaTxt.selo; j.t = iaTxt.titulo; j.u = iaTxt.subtitulo; }
+      return btoa(unescape(encodeURIComponent(JSON.stringify(j)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    // Preenche o formulário com o que a IA encontrou (sem apagar o que você já digitou)
+    function aplicarIA(f) {
+      iaTxt = { selo: f.selo, titulo: f.titulo, subtitulo: f.subtitulo };
+      if (f.nome && !$('camNome').value.trim()) $('camNome').value = f.nome;
+      if (T.some(t => t.id === f.tipo)) $('camTipo').value = f.tipo;
+      if (f.cores && f.cores[0]) $('camCor').value = f.cores[0];
+      if (f.whatsapp && !$('camWpp').value.trim()) $('camWpp').value = f.whatsapp;
+      if (f.instagram && !$('camInsta').value.trim()) $('camInsta').value = '@' + f.instagram;
+      if (f.endereco && !$('camEnd').value.trim()) $('camEnd').value = f.endereco;
+      if (f.horario && !$('camHor').value.trim()) $('camHor').value = f.horario;
+      $('camProdutos').value = (f.produtos || []).map(p => p.emoji + ' ' + p.nome + ' | ' + p.descricao + ' | ' + p.preco.toFixed(2).replace('.', ',') + ' | ' + p.categoria).join('\n');
+      const aviso = [f.lidoDaFoto ? 'Li os produtos e preços das fotos: confira os nomes e valores na caixa de produtos.' : 'Não vi preços nas fotos, então criei produtos de exemplo. Edite se quiser.'];
+      if (!f.nome) aviso.push('Não achei o nome da loja nas fotos: digite o nome.');
+      $('camIAMsg').textContent = '✨ ' + aviso.join(' ');
+      $('camIAMsg').classList.remove('hidden');
+    }
+
+    $('camIA').addEventListener('click', async () => {
+      const arqs = [...$('camFotos').files].slice(0, 3);
+      if (!arqs.length) { alert('Escolha pelo menos uma foto do lugar (fachada, cardápio ou vitrine).'); return; }
+      const b = $('camIA'), ori = b.textContent;
+      b.disabled = true; b.textContent = 'Lendo as fotos...';
+      try {
+        const fotos = [];
+        for (const a of arqs) fotos.push(await reduzirFoto(a, 1024, 0.7));
+        const resp = await window.chamarApiAdmin('/api/camaleao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fotos }) });
+        const dados = await window.lerRespostaApi(resp);
+        aplicarIA(dados.ficha);
+      } catch (err) { alert(err.message || 'Não foi possível ler as fotos com a IA.'); }
+      finally { b.disabled = false; b.textContent = ori; }
+    });
+
     $('camGerar').addEventListener('click', () => {
       const nome = $('camNome').value.trim();
       if (!nome) { alert('Digite o nome da loja.'); $('camNome').focus(); return; }
       if ($('camWpp').value.trim() && !limparFone($('camWpp').value)) { alert('WhatsApp inválido. Use o DDD e o número, por exemplo: 19 99999-9999.'); $('camWpp').focus(); return; }
       if ($('camInsta').value.trim() && !limparInsta($('camInsta').value)) { alert('Instagram inválido. Use só o nome de usuário, por exemplo: @cafedobairro.'); $('camInsta').focus(); return; }
-      const o = { tipo: $('camTipo').value, nome, cor: $('camCor').value, wpp: $('camWpp').value, insta: $('camInsta').value, end: $('camEnd').value, hor: $('camHor').value };
+      const o = { tipo: $('camTipo').value, nome, cor: $('camCor').value, wpp: $('camWpp').value, insta: $('camInsta').value, end: $('camEnd').value, hor: $('camHor').value, d: montarD() };
       let comFoto = false;
       try {
         if (foto) { localStorage.setItem('camaleao_foto', foto); comFoto = true; } else localStorage.removeItem('camaleao_foto');
