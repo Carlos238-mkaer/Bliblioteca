@@ -1,8 +1,8 @@
 // api/camaleao.js: lê fotos de uma loja com o Gemini (plano gratuito do Google AI Studio)
-// e devolve uma "ficha" com tipo, nome, cores, contatos e produtos.
+// e devolve uma "ficha" com tipo, nome, contatos, produtos e o DESIGN do site (paleta, fonte, tema, seções e textos).
 // Só o administrador logado pode usar (evita gastar o limite gratuito à toa).
 
-export const config = { maxDuration: 30 };
+export const config = { maxDuration: 60 };
 
 const TIPOS = 'cafeteria, padaria, barbearia, roupas, petshop, restaurante, floricultura, academia, hamburgueria, pizzaria, sorveteria, doceria, salao, unhas, otica, papelaria, hortifruti, oficina, tatuagem, odonto, idiomas, celulares, outro';
 const LISTA_TIPOS = TIPOS.split(', ');
@@ -11,7 +11,12 @@ const LISTA_TIPOS = TIPOS.split(', ');
 // Para forçar um modelo, crie a variável GEMINI_MODEL na Vercel.
 const MODELOS = [...new Set([process.env.GEMINI_MODEL, 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-flash-lite'].filter(Boolean))];
 
-const PROMPT = `Você analisa fotos de um estabelecimento comercial real (fachada, interior, cardápio, vitrine, placa) para montar uma demonstração de site de vendas.
+const FONTES = ['Playfair Display', 'Lora', 'Montserrat', 'Poppins', 'Oswald', 'DM Serif Display', 'Nunito', 'Raleway', 'Merriweather'];
+const ICONES = ['heart', 'leaf', 'clock', 'star', 'truck', 'shield-check', 'sparkles', 'coffee', 'award', 'smile', 'users', 'map-pin', 'flame', 'gift', 'thumbs-up', 'scissors', 'wheat', 'utensils', 'flower-2', 'dumbbell', 'wrench', 'paw-print', 'shirt', 'zap', 'sun', 'wallet'];
+const SECOES = ['sobre', 'diferenciais', 'catalogo', 'galeria', 'avaliacoes', 'contato'];
+const ESTILOS = ['acolhedor', 'moderno', 'luxo', 'divertido', 'rustico', 'minimalista', 'industrial'];
+
+const PROMPT = `Você analisa fotos de um estabelecimento comercial real (fachada, interior, cardápio, vitrine, placa) para você DESENHAR um site de vendas sob medida para ele: a identidade visual, o tom dos textos, as seções e os produtos.
 
 Responda SOMENTE com um JSON válido, sem texto antes ou depois, neste formato:
 {
@@ -27,7 +32,15 @@ Responda SOMENTE com um JSON válido, sem texto antes ou depois, neste formato:
   "subtitulo": "<uma frase, até 110 caracteres>",
   "categorias": ["<2 a 4 categorias>"],
   "lido_da_foto": true,
-  "produtos": [ { "nome": "...", "descricao": "até 45 caracteres", "preco": 12.5, "categoria": "<uma das categorias>", "emoji": "<um emoji>" } ]
+  "produtos": [ { "nome": "...", "descricao": "até 45 caracteres", "preco": 12.5, "categoria": "<uma das categorias>", "emoji": "<um emoji>" } ],
+  "estilo": "<${ESTILOS.join(' | ')}>",
+  "paleta": { "principal": "#rrggbb", "fundo": "#rrggbb", "texto": "#rrggbb", "fundo_escuro": "#rrggbb", "texto_escuro": "#rrggbb" },
+  "fonte": "<${FONTES.join(' | ')}>",
+  "cantos": "<suaves | retos>",
+  "tema": "<claro | escuro>",
+  "secoes": ["<ids na ordem em que aparecem na página: ${SECOES.join(', ')}>"],
+  "textos": { "catalogo_titulo": "até 30 caracteres", "catalogo_selo": "até 24 caracteres", "sobre_titulo": "até 40 caracteres", "sobre_texto": "2 a 3 frases, até 320 caracteres", "cta": "texto do botão principal, até 22 caracteres" },
+  "diferenciais": [ { "icone": "<${ICONES.join(' | ')}>", "titulo": "até 28 caracteres", "texto": "até 90 caracteres" } ]
 }
 
 Regras:
@@ -36,7 +49,10 @@ Regras:
 3. Se não houver preços visíveis, crie produtos de exemplo típicos desse tipo de negócio, com preços realistas em reais, e use lido_da_foto false.
 4. Entre 6 e 8 produtos. Cada "categoria" deve ser uma das "categorias".
 5. Não descreva nem identifique pessoas.
-6. Escreva em português do Brasil. Se o negócio não se encaixar em nenhum tipo, use "outro".`;
+6. Design: a "paleta" deve vir das cores reais que você vê (placa, fachada, decoração). "fundo" é um tom claro suave, "texto" é escuro e legível sobre ele; "fundo_escuro" é bem escuro e "texto_escuro" é claro. Escolha "fonte", "cantos" e "tema" que combinem com o estilo do lugar (ex.: luxo = serifada, cantos retos, tema escuro; divertido = Poppins ou Nunito, cantos suaves).
+7. "secoes": inclua só as que fazem sentido e sempre "catalogo" e "contato". Use "galeria" apenas se o lugar tiver um visual que valha mostrar.
+8. Textos de "sobre_texto" e "diferenciais" devem descrever o que dá para ver ou o que é típico desse tipo de negócio, em tom caloroso. Nunca invente fatos verificáveis: ano de fundação, prêmios, certificações, nomes de pessoas, "entrega grátis" ou promoções.
+9. Escreva em português do Brasil. Se o negócio não se encaixar em nenhum tipo, use "outro".`;
 
 // Carrega o verificador de administrador só quando a rota é usada (mesmo padrão do feedback.js)
 async function verificarAdmin(req, res) {
@@ -83,7 +99,33 @@ function limparFicha(j) {
     subtitulo: txt(j.subtitulo, 160),
     categorias,
     lidoDaFoto: j.lido_da_foto === true,
-    produtos
+    produtos,
+    design: limparDesign(j)
+  };
+}
+
+const lista = (v, ok) => (Array.isArray(v) ? v : []).filter((x, i, a) => ok.includes(x) && a.indexOf(x) === i);
+
+function limparDesign(j) {
+  const p = j.paleta && typeof j.paleta === 'object' ? j.paleta : {};
+  const pal = [hex(p.principal), hex(p.fundo), hex(p.texto), hex(p.fundo_escuro), hex(p.texto_escuro)];
+  const t = j.textos && typeof j.textos === 'object' ? j.textos : {};
+  const secoes = lista(j.secoes, SECOES);
+  ['catalogo', 'contato'].forEach(id => { if (!secoes.includes(id)) secoes.push(id); });
+  return {
+    estilo: ESTILOS.includes(j.estilo) ? j.estilo : null,
+    paleta: pal.every(Boolean) ? { principal: pal[0], fundo: pal[1], texto: pal[2], fundoEscuro: pal[3], textoEscuro: pal[4] } : null,
+    fonte: FONTES.includes(j.fonte) ? j.fonte : null,
+    cantos: j.cantos === 'retos' ? 'retos' : 'suaves',
+    tema: j.tema === 'escuro' ? 'escuro' : 'claro',
+    secoes,
+    textos: {
+      catalogo_titulo: txt(t.catalogo_titulo, 30), catalogo_selo: txt(t.catalogo_selo, 24),
+      sobre_titulo: txt(t.sobre_titulo, 40), sobre_texto: txt(t.sobre_texto, 320), cta: txt(t.cta, 22)
+    },
+    diferenciais: (Array.isArray(j.diferenciais) ? j.diferenciais : []).slice(0, 3).map(d => ({
+      icone: ICONES.includes(d && d.icone) ? d.icone : 'star', titulo: txt(d && d.titulo, 28), texto: txt(d && d.texto, 90)
+    })).filter(d => d.titulo)
   };
 }
 
