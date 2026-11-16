@@ -73,7 +73,7 @@ tailwind.config = { theme: { extend: {
 </div>
 
 <script src="supabase.js"></script>
-<script src="camaleao.js"></script>
+<script src="camaleao.js?v=7"></script>
 <script>
 // ---------- Acesso: precisa estar logado como administrador ----------
 async function ehAdmin() {
@@ -90,13 +90,28 @@ function mostrarPortao(msg, comForm) {
   document.getElementById('portaoMsg').textContent = msg;
   document.getElementById('portaoForm').classList.toggle('hidden', !comForm);
 }
+// Se o camaleao.js publicado estiver antigo ou não carregar, a página explica em vez de ficar em branco
+function avisoVersao(box, detalhe) {
+  box.innerHTML = '<div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 max-w-xl mx-auto text-sm text-warmgray-800 space-y-3">' +
+    '<p class="font-semibold">⚠️ O arquivo camaleao.js do seu site está desatualizado ou não carregou.</p>' +
+    '<ol class="list-decimal pl-5 space-y-1 text-xs"><li>No GitHub, abra o arquivo <b>camaleao.js</b> (sem acento, na mesma pasta do index.html).</li>' +
+    '<li>Clique no lápis, apague tudo e cole a versão nova.</li>' +
+    '<li>Clique em <b>Commit changes</b>, espere a Vercel publicar e aperte <b>Ctrl+Shift+R</b>.</li></ol>' +
+    '<p class="text-[11px] text-gray-500">Para conferir, <a class="underline" href="camaleao.js" target="_blank">abra o camaleao.js</a>: ele deve mostrar código. Detalhe técnico: <span id="detVersao"></span></p></div>';
+  box.querySelector('#detVersao').textContent = detalhe;
+}
 function abrirEstudio() {
   document.getElementById('portao').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   const box = document.getElementById('estudio');
-  if (!box.dataset.pronto) {
-    box.dataset.pronto = '1';
+  if (box.dataset.pronto) return;
+  try {
+    if (!window.Camaleao) throw new Error('o camaleao.js não carregou (arquivo ausente ou com nome errado)');
+    if (typeof Camaleao.montarEstudio !== 'function') throw new Error('o camaleao.js publicado é uma versão antiga (sem montarEstudio)');
     Camaleao.montarEstudio(box, { chamarApiAdmin, lerRespostaApi, resolverUrlCapa, apresentar });
+    box.dataset.pronto = '1';
+  } catch (err) {
+    avisoVersao(box, err.message || String(err));
   }
 }
 document.getElementById('portaoForm').addEventListener('submit', async e => {
