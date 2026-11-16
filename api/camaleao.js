@@ -36,6 +36,7 @@ Responda SOMENTE com um JSON válido, sem texto antes ou depois, neste formato:
   "estilo": "<${ESTILOS.join(' | ')}>",
   "paleta": { "principal": "#rrggbb", "fundo": "#rrggbb", "texto": "#rrggbb", "fundo_escuro": "#rrggbb", "texto_escuro": "#rrggbb" },
   "fonte": "<${FONTES.join(' | ')}>",
+  "layout": { "hero": "<imagem | dividido | centro>", "produtos": "<grade | lista | compacto>" },
   "cantos": "<suaves | retos>",
   "tema": "<claro | escuro>",
   "secoes": ["<ids na ordem em que aparecem na página: ${SECOES.join(', ')}>"],
@@ -50,9 +51,10 @@ Regras:
 4. Entre 6 e 8 produtos. Cada "categoria" deve ser uma das "categorias".
 5. Não descreva nem identifique pessoas.
 6. Design: a "paleta" deve vir das cores reais que você vê (placa, fachada, decoração). "fundo" é um tom claro suave, "texto" é escuro e legível sobre ele; "fundo_escuro" é bem escuro e "texto_escuro" é claro. Escolha "fonte", "cantos" e "tema" que combinem com o estilo do lugar (ex.: luxo = serifada, cantos retos, tema escuro; divertido = Poppins ou Nunito, cantos suaves).
-7. "secoes": inclua só as que fazem sentido e sempre "catalogo" e "contato". Use "galeria" apenas se o lugar tiver um visual que valha mostrar.
-8. Textos de "sobre_texto" e "diferenciais" devem descrever o que dá para ver ou o que é típico desse tipo de negócio, em tom caloroso. Nunca invente fatos verificáveis: ano de fundação, prêmios, certificações, nomes de pessoas, "entrega grátis" ou promoções.
-9. Escreva em português do Brasil. Se o negócio não se encaixar em nenhum tipo, use "outro".`;
+7. Estrutura da página ("layout"): "hero" = "imagem" (foto grande de fundo, para lugares com fachada ou ambiente bonito), "dividido" (texto de um lado e imagem do outro) ou "centro" (texto centralizado, sem foto). "produtos" = "lista" (linhas, ótimo para cardápios e serviços), "grade" (cartões com imagem, ótimo para vitrines como roupas e flores) ou "compacto" (muitos itens pequenos).
+8. "secoes": inclua só as que fazem sentido e sempre "catalogo" e "contato". Use "galeria" apenas se o lugar tiver um visual que valha mostrar.
+9. Textos de "sobre_texto" e "diferenciais" devem descrever o que dá para ver ou o que é típico desse tipo de negócio, em tom caloroso. Nunca invente fatos verificáveis: ano de fundação, prêmios, certificações, nomes de pessoas, "entrega grátis" ou promoções.
+10. Escreva em português do Brasil. Se o negócio não se encaixar em nenhum tipo, use "outro".`;
 
 // Carrega o verificador de administrador só quando a rota é usada (mesmo padrão do feedback.js)
 async function verificarAdmin(req, res) {
@@ -116,6 +118,10 @@ function limparDesign(j) {
     estilo: ESTILOS.includes(j.estilo) ? j.estilo : null,
     paleta: pal.every(Boolean) ? { principal: pal[0], fundo: pal[1], texto: pal[2], fundoEscuro: pal[3], textoEscuro: pal[4] } : null,
     fonte: FONTES.includes(j.fonte) ? j.fonte : null,
+    layout: {
+      hero: ['imagem', 'dividido', 'centro'].includes(j.layout && j.layout.hero) ? j.layout.hero : '',
+      produtos: ['grade', 'lista', 'compacto'].includes(j.layout && j.layout.produtos) ? j.layout.produtos : ''
+    },
     cantos: j.cantos === 'retos' ? 'retos' : 'suaves',
     tema: j.tema === 'escuro' ? 'escuro' : 'claro',
     secoes,
