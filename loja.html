@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Loja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link id="fonteTexto" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{--p:#8b5e3c;--pt:#fff;--bg:#fbf6f0;--tx:#2b1d14;--sf:#fff;--bd:#e8dfd5;--mu:#7a6d63;--soft:#f3e9de;--r:14px;--fh:'Playfair Display'}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+h1,h2,h3{font-family:var(--fh),Georgia,serif;font-weight:600;line-height:1.15}
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+img{max-width:100%;display:block}
+i[data-lucide],svg.ic{width:18px;height:18px;flex-shrink:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+section{padding:46px 0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--p)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:calc(var(--r)*2);font-weight:600;font-size:14px;background:var(--p);color:var(--pt);transition:.2s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.sec{background:transparent;color:inherit;border:1.5px solid var(--bd)}
+.btn.sm{padding:8px 14px;font-size:13px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)}
+/* topo */
+.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--fh),serif;font-weight:700;font-size:20px}
+.logo span.ic{display:grid;place-items:center;width:34px;height:34px;border-radius:calc(var(--r)*.7);background:var(--p);color:var(--pt)}
+.nav{display:flex;gap:22px;font-size:14px;font-weight:500}
+.nav a{opacity:.8}.nav a:hover{opacity:1;color:var(--p)}
+.acoes{display:flex;align-items:center;gap:8px}
+.ib{position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:calc(var(--r)*1.5);border:1px solid var(--bd);background:var(--sf)}
+.badge{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--p);color:var(--pt);font-size:11px;font-weight:700;display:grid;place-items:center}
+/* hero */
+.hero{padding:0}
+.hero .hc{padding:68px 0}
+.hero h1{font-size:clamp(32px,5.4vw,56px);margin:14px 0}
+.hero p.sub{font-size:clamp(15px,2vw,18px);max-width:520px;opacity:.85}
+.pill{display:inline-block;padding:6px 14px;border-radius:99px;background:var(--soft);color:var(--p);font-size:12px;font-weight:600;border:1px solid var(--bd)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.hero.imagem{position:relative;background-size:cover;background-position:center;color:#fff}
+.hero.imagem:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(0,0,0,.72),rgba(0,0,0,.25))}
+.hero.imagem .hc{position:relative;padding:clamp(80px,14vw,150px) 0}
+.hero.imagem .pill{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
+.hero.imagem .btn.sec{color:#fff;border-color:rgba(255,255,255,.55)}
+.hero.dividido .hg{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
+.hero.dividido .art{aspect-ratio:4/5;border-radius:calc(var(--r)*2);overflow:hidden;background:var(--soft);border:1px solid var(--bd);box-shadow:0 24px 50px -24px rgba(0,0,0,.35)}
+.hero.dividido .art img{width:100%;height:100%;object-fit:cover}
+.hero.centro{text-align:center;background:radial-gradient(120% 90% at 50% 0,var(--soft),var(--bg))}
+.hero.centro .sub{margin:0 auto}.hero.centro .cta{justify-content:center}
+/* informações */
+.info{display:flex;flex-wrap:wrap;gap:12px;padding:26px 0 0}
+.info .it{flex:1 1 220px;display:flex;align-items:center;gap:12px;padding:14px 16px}
+.ico{display:grid;place-items:center;width:40px;height:40px;border-radius:calc(var(--r)*.8);background:var(--soft);color:var(--p);flex-shrink:0}
+.it small{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
+.it b{font-size:14px;font-weight:600;overflow-wrap:anywhere}
+/* produtos */
+.sh{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:22px}
+.sh h2{font-size:clamp(26px,3.6vw,38px);margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 16px;border-radius:99px;border:1px solid var(--bd);background:var(--sf);font-size:13px;font-weight:500}
+.chip.on{background:var(--p);color:var(--pt);border-color:var(--p)}
+.prods{display:grid;gap:18px}
+.prods.grade{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.prods.compacto{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.prods.lista{grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+.pc{overflow:hidden;display:flex;flex-direction:column;transition:.2s}
+.pc:hover{transform:translateY(-3px);box-shadow:0 16px 30px -18px rgba(0,0,0,.4)}
+.pc img{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--soft)}
+.pc .bd{padding:14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.pc h3{font-size:17px}.pc p{font-size:13px;color:var(--mu);flex:1}
+.pc .ft{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.pr{font-weight:700;font-size:16px}
+.prods.compacto .pc h3{font-size:14px}.prods.compacto .pc p{display:none}
+.prods.lista .pc{flex-direction:row;align-items:center;gap:14px;padding:12px}
+.prods.lista .pc img{width:92px;height:92px;aspect-ratio:auto;border-radius:calc(var(--r)*.7);flex-shrink:0}
+.prods.lista .pc .bd{padding:0}
+/* seções */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+.two img.foto{width:100%;height:340px;object-fit:cover;border-radius:calc(var(--r)*1.6);border:1px solid var(--bd)}
+.two p{font-size:16px;opacity:.88;margin-top:14px}
+.difs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.difs .card{padding:22px}.difs h3{font-size:18px;margin:14px 0 6px}.difs p{font-size:14px;color:var(--mu)}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.gal img{width:100%;height:220px;object-fit:cover;border-radius:var(--r);border:1px solid var(--bd)}
+.deps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.deps .card{padding:20px}.deps .st{color:#e0a526;letter-spacing:2px;font-size:14px}.deps p{font-size:14px;margin:8px 0}
+.deps small{color:var(--mu);font-size:12px}
+.ctt{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.ctt .its{display:grid;gap:12px;align-content:start}
+.form{padding:22px;display:grid;gap:12px}
+.form input,.form textarea{width:100%;padding:12px 14px;border-radius:calc(var(--r)*.8);border:1px solid var(--bd);background:var(--bg);font-size:14px}
+.form input:focus,.form textarea:focus{outline:2px solid var(--p);outline-offset:1px}
+.muted{color:var(--mu);font-size:13px}
+footer{border-top:1px solid var(--bd);padding:30px 0;margin-top:20px;font-size:13px;color:var(--mu)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+/* carrinho */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.25s;z-index:40}
+.ov.on{opacity:1;pointer-events:auto}
+.drw{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);background:var(--sf);z-index:50;transform:translateX(105%);transition:.3s;display:flex;flex-direction:column;box-shadow:-20px 0 50px -20px rgba(0,0,0,.4)}
+.drw.on{transform:none}
+.drw header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--bd)}
+.drw .lst{flex:1;overflow:auto;padding:14px 20px;display:grid;gap:12px;align-content:start}
+.drw .ci{display:flex;gap:12px;align-items:center}
+.drw .ci img{width:54px;height:54px;border-radius:10px;object-fit:cover}
+.drw .ci div{flex:1;min-width:0;font-size:14px}
+.q{display:flex;align-items:center;gap:8px}
+.q button{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);display:grid;place-items:center}
+.drw footer{border:0;padding:18px 20px;margin:0;display:grid;gap:12px;border-top:1px solid var(--bd);color:var(--tx)}
+.tot{display:flex;justify-content:space-between;font-weight:700;font-size:17px}
+.zap{position:fixed;right:18px;bottom:18px;z-index:35;width:56px;height:56px;border-radius:99px;background:#25d366;display:grid;place-items:center;box-shadow:0 10px 24px -8px rgba(0,0,0,.5);transition:.2s}
+.zap:hover{transform:scale(1.06)}.zap svg{width:26px;height:26px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--tx);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13px;font-weight:500;opacity:0;transition:.3s;z-index:60;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:760px){
+ .nav{display:none}.two,.ctt,.hero.dividido .hg{grid-template-columns:1fr}.hero.dividido .art{aspect-ratio:16/10;order:-1}
+ .hero .hc{padding:42px 0}section{padding:34px 0}.prods.lista{grid-template-columns:1fr}.two img.foto{height:240px}
+ .btn .tx{display:none}.top .wrap{height:58px}.logo{font-size:18px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="ov" id="ov" data-acao="fechar"></div>
+<aside class="drw" id="drw" aria-label="Carrinho"></aside>
+<div class="toast" id="toast" role="status"></div>
+<script src="camaleao.js"></script>
+<script>
+(function () {
+  'use strict';
+  const app = document.getElementById('app');
+  const q = new URLSearchParams(location.search);
+  if (!q.has('demo') || !window.Camaleao) {
+    app.innerHTML = '<p style="padding:48px 20px;text-align:center;color:#666">Esta página mostra a demonstração de uma loja. Gere o link pela aba Camaleão do painel.</p>';
+    return;
+  }
+  const U = Camaleao.util, esc = U.esc, fmtFone = Camaleao.fmtFone;
+  const f = Camaleao.montarFicha(q.get('demo'), q.get('nome'), q.get('cor'), { wpp: q.get('wpp'), insta: q.get('insta'), end: q.get('end'), hor: q.get('hor'), d: q.get('d') });
+  const D = f.design || { txt: {}, dif: [], imgs: [], secoes: [], layout: {} };
+  const real = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+  const wa = m => 'https://wa.me/' + f.wpp + '?text=' + encodeURIComponent(m);
+  const ic = n => '<i data-lucide="' + n + '"></i>';
+  const SVG_IG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>';
+  const SVG_WA = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
+
+  // ---------- Fotos (do link, ou desta máquina quando foi aberta pelo painel) ----------
+  let imgs = D.imgs.slice();
+  if (!imgs.length && q.get('foto') === '1') {
+    try { const l = localStorage.getItem('camaleao_foto'); if (/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(l || '')) imgs = [l]; } catch (e) {}
+  }
+
+  // ---------- Estrutura escolhida (a IA decide; sem IA, vale o padrão do tipo) ----------
+  const TIPOS_LISTA = ['cafeteria', 'padaria', 'restaurante', 'pizzaria', 'hamburgueria', 'sorveteria', 'oficina', 'odonto', 'idiomas', 'academia', 'barbearia', 'tatuagem', 'salao', 'unhas'];
+  let heroTipo = D.layout.hero || (imgs.length ? 'imagem' : 'dividido');
+  if (heroTipo === 'imagem' && !imgs.length) heroTipo = 'centro';
+  const prodTipo = D.layout.produtos || (TIPOS_LISTA.includes(f.tipo) ? 'lista' : 'grade');
+  const ordem = (D.secoes && D.secoes.length ? D.secoes.slice() : ['sobre', 'diferenciais', 'catalogo', 'galeria', 'avaliacoes', 'contato']);
+  ['catalogo', 'contato'].forEach(id => { if (!ordem.includes(id)) ordem.push(id); });
+
+  // ---------- Aparência: cores, tema, fonte e cantos ----------
+  let escuro = D.tema === 'e';
+  function aplicarTema() {
+    const c = f.cfg, s = document.documentElement.style, p = c.cor_principal;
+    const bg = escuro ? c.cor_fundo_escuro : c.cor_fundo, tx = escuro ? c.cor_texto_escuro : c.cor_texto;
+    let ac = p;
+    for (let t = 0.1; escuro && U.contraste(ac, bg) < 3 && t <= 0.9; t += 0.1) ac = U.mix(p, '#ffffff', t);
+    s.setProperty('--bg', bg); s.setProperty('--tx', tx);
+    s.setProperty('--sf', escuro ? U.mix(bg, '#ffffff', 0.06) : U.mix(bg, '#ffffff', 0.7));
+    s.setProperty('--bd', U.mix(bg, tx, 0.16)); s.setProperty('--mu', U.mix(tx, bg, 0.4));
+    s.setProperty('--p', ac); s.setProperty('--pt', U.lumi(ac) > 0.4 ? '#1e1e1e' : '#ffffff');
+    s.setProperty('--soft', U.mix(bg, ac, escuro ? 0.18 : 0.12));
+  }
+  const fonte = D.fonte || 'Playfair Display';
+  const lf = document.createElement('link'); lf.rel = 'stylesheet';
+  lf.href = 'https://fonts.googleapis.com/css2?family=' + fonte.replace(/ /g, '+') + ':wght@500;600;700&display=swap';
+  document.head.appendChild(lf);
+  document.documentElement.style.setProperty('--fh', "'" + fonte + "'");
+  if (D.retos) document.documentElement.style.setProperty('--r', '4px');
+  aplicarTema();
+  document.title = f.nome;
+
+  // ---------- Blocos da página ----------
+  const cartao = (icone, rotulo, valor, href) => {
+    const i = icone === 'insta' ? SVG_IG : ic(icone);
+    const m = '<span class="ico">' + i + '</span><span style="min-width:0"><small>' + rotulo + '</small><b>' + esc(valor) + '</b></span>';
+    return href ? '<a class="it card" href="' + esc(href) + '" target="_blank" rel="noopener">' + m + '</a>' : '<div class="it card">' + m + '</div>';
+  };
+  const itens = [];
+  if (f.wpp) itens.push(['message-circle', 'WhatsApp', fmtFone(f.wpp), wa('Olá! Vim pelo site e gostaria de mais informações.')]);
+  if (f.insta) itens.push(['insta', 'Instagram', '@' + f.insta, 'https://www.instagram.com/' + f.insta + '/']);
+  if (f.end) itens.push(['map-pin', 'Endereço', f.end, 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.end)]);
+  if (f.hor) itens.push(['clock', 'Horário', f.hor, '']);
+
+  function hero() {
+    const sec = f.wpp ? '<a class="btn sec" target="_blank" rel="noopener" href="' + esc(wa('Olá! Vim pelo site.')) + '">' + ic('message-circle') + ' Falar no WhatsApp</a>' : '';
+    const txt = '<span class="pill">' + esc(f.cfg.hero_selo) + '</span><h1>' + esc(f.cfg.hero_titulo) + '</h1><p class="sub">' + esc(f.cfg.hero_subtitulo) + '</p>' +
+      '<div class="cta"><a class="btn" href="#produtos">' + esc(D.txt.cta || 'Ver produtos') + ' ' + ic('arrow-right') + '</a>' + sec + '</div>';
+    if (heroTipo === 'imagem') return '<header class="hero imagem" style="background-image:url(\'' + esc(imgs[0]) + '\')"><div class="wrap hc">' + txt + '</div></header>';
+    if (heroTipo === 'dividido') {
+      const arte = imgs[0] ? '<img src="' + esc(imgs[0]) + '" alt="' + esc(f.nome) + '">' : '<img src="' + esc(f.prods[0].capa_url) + '" alt="">';
+      return '<header class="hero dividido"><div class="wrap hc hg"><div>' + txt + '</div><div class="art">' + arte + '</div></div></header>';
+    }
+    return '<header class="hero centro"><div class="wrap hc">' + txt + '</div></header>';
+  }
+  function info() {
+    return itens.length ? '<div class="wrap"><div class="info">' + itens.map(i => cartao(i[0], i[1], i[2], i[3])).join('') + '</div></div>' : '';
+  }
+  function produtos() {
+    const chips = f.cats.length > 1 ? '<div class="chips"><button class="chip on" data-acao="filtro" data-cat="">Todos</button>' + f.cats.map((c, i) => '<button class="chip" data-acao="filtro" data-cat="' + i + '">' + esc(c) + '</button>').join('') + '</div>' : '';
+    return '<section id="produtos"><div class="wrap"><div class="sh"><div><span class="eyebrow">' + esc(D.txt.cs || 'Catálogo') + '</span><h2>' + esc(D.txt.ct || 'Nossos produtos') + '</h2></div>' + chips + '</div><div id="prods" class="prods ' + prodTipo + '"></div></div></section>';
+  }
+  function cardProduto(p) {
+    const btn = '<button class="btn sm" data-acao="add" data-id="' + p.id + '" aria-label="Adicionar ' + esc(p.titulo) + '">' + ic('plus') + '<span class="tx">Adicionar</span></button>';
+    return '<article class="pc card"><img src="' + p.capa_url + '" alt="' + esc(p.titulo) + '" loading="lazy"><div class="bd"><h3>' + esc(p.titulo) + '</h3><p>' + esc(p.autor) + '</p><div class="ft"><span class="pr">' + real(p.preco) + '</span>' + btn + '</div></div></article>';
+  }
+  function sobre() {
+    if (!D.txt.sx) return '';
+    const im = imgs[1] || imgs[0];
+    return '<section id="sobre"><div class="wrap two"><div><span class="eyebrow">Sobre nós</span><h2 style="font-size:clamp(26px,3.6vw,38px);margin-top:6px">' + esc(D.txt.st || f.nome) + '</h2><p>' + esc(D.txt.sx) + '</p></div>' + (im ? '<img class="foto" src="' + esc(im) + '" alt="' + esc(f.nome) + '" loading="lazy">' : '') + '</div></section>';
+  }
+  function diferenciais() {
+    if (!D.dif.length) return '';
+    return '<section><div class="wrap difs">' + D.dif.map(d => '<div class="card"><span class="ico">' + ic(d.i) + '</span><h3>' + esc(d.t) + '</h3><p>' + esc(d.x) + '</p></div>').join('') + '</div></section>';
+  }
+  function galeria() {
+    if (imgs.length < 2) return '';
+    return '<section id="galeria"><div class="wrap"><div class="sh"><div><span class="eyebrow">Conheça o espaço</span></div></div><div class="gal">' + imgs.map(u => '<img src="' + esc(u) + '" alt="' + esc(f.nome) + '" loading="lazy">').join('') + '</div></div></section>';
+  }
+  function depoimentos() {
+    const ex = [['Mariana S.', 5, 'Tudo muito bem feito, voltarei com certeza!'], ['Rafael P.', 5, 'Atendimento excelente e produtos de qualidade.'], ['Camila T.', 4, 'Muito bom, já indiquei para os amigos.']];
+    return '<section id="depoimentos"><div class="wrap"><div class="sh"><div><span class="eyebrow">Clientes</span><h2>O que dizem por aí</h2></div><span class="muted">Depoimentos de exemplo</span></div><div class="deps">' +
+      ex.map(e => '<div class="card"><div class="st">' + '★'.repeat(e[1]) + '☆'.repeat(5 - e[1]) + '</div><p>"' + e[2] + '"</p><small>' + e[0] + '</small></div>').join('') + '</div></div></section>';
+  }
+  function contato() {
+    const lado = itens.length ? itens.map(i => cartao(i[0], i[1], i[2], i[3])).join('') : '<p class="muted">Informe o WhatsApp, o Instagram ou o endereço da loja para mostrar os contatos aqui.</p>';
+    return '<section id="contato"><div class="wrap"><div class="sh"><div><span class="eyebrow">Contato</span><h2>Fale com a gente</h2></div></div><div class="ctt"><div class="its">' + lado + '</div>' +
+      '<form class="card form" id="form"><h3 style="font-size:18px">Envie uma mensagem</h3><input id="fn" required maxlength="60" placeholder="Seu nome"><textarea id="fm" required rows="4" maxlength="500" placeholder="Escreva a sua mensagem..."></textarea><button class="btn" type="submit">' + ic('send') + ' Enviar pelo WhatsApp</button></form></div></div></section>';
+  }
+  const blocos = { sobre, diferenciais, catalogo: produtos, galeria, avaliacoes: depoimentos, contato };
+
+  // ---------- Montagem da página ----------
+  const logo = '<span class="ic">' + ic(f.icone) + '</span><span>' + esc(f.nome) + '</span>';
+  const nav = '<nav class="nav"><a href="#produtos">Produtos</a>' + (D.txt.sx ? '<a href="#sobre">Sobre</a>' : '') + '<a href="#contato">Contato</a></nav>';
+  app.innerHTML =
+    '<div class="top"><div class="wrap"><a class="logo" href="#">' + logo + '</a>' + nav +
+    '<div class="acoes"><button class="ib" data-acao="tema" aria-label="Alternar tema" id="bTema"></button>' +
+    '<button class="ib" data-acao="carrinho" aria-label="Abrir carrinho">' + ic('shopping-bag') + '<span class="badge" id="badge" style="display:none">0</span></button></div></div></div>' +
+    hero() + info() + ordem.map(id => (blocos[id] ? blocos[id]() : '')).join('') +
+    '<footer><div class="wrap"><b class="fh" style="font-family:var(--fh),serif;color:var(--tx)">' + esc(f.nome) + '</b><span>' + (f.end ? esc(f.end) + ' · ' : '') + '© ' + new Date().getFullYear() + ' ' + esc(f.nome) + '. Site de demonstração.</span></div></footer>' +
+    (f.wpp ? '<a class="zap" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" href="' + esc(wa('Olá! Vim pelo site e gostaria de mais informações.')) + '">' + SVG_WA + '</a>' : '');
+
+  const icones = () => { try { window.lucide && lucide.createIcons(); } catch (e) {} };
+  const temaBtn = () => { document.getElementById('bTema').innerHTML = ic(escuro ? 'sun' : 'moon'); icones(); };
+
+  // ---------- Produtos e filtro ----------
+  let filtro = '';
+  function listar() {
+    document.getElementById('prods').innerHTML = f.prods.filter(p => filtro === '' || p.genero === f.cats[+filtro]).map(cardProduto).join('');
+    icones();
+  }
+  listar(); temaBtn();
+
+  // ---------- Carrinho e pedido pelo WhatsApp ----------
+  const cart = new Map();
+  const toast = m => { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2400); };
+  const total = () => f.prods.reduce((s, p) => s + p.preco * (cart.get(p.id) || 0), 0);
+  function carrinho() {
+    const n = [...cart.values()].reduce((a, b) => a + b, 0), b = document.getElementById('badge');
+    b.textContent = n; b.style.display = n ? 'grid' : 'none';
+    const itensCart = f.prods.filter(p => cart.get(p.id));
+    document.getElementById('drw').innerHTML =
+      '<header><h3 style="font-size:20px">Seu pedido</h3><button class="ib" data-acao="fechar" aria-label="Fechar">' + ic('x') + '</button></header><div class="lst">' +
+      (itensCart.length ? itensCart.map(p => '<div class="ci"><img src="' + p.capa_url + '" alt=""><div><b>' + esc(p.titulo) + '</b><div class="muted">' + real(p.preco) + '</div></div><div class="q"><button data-acao="menos" data-id="' + p.id + '" aria-label="Diminuir">' + ic('minus') + '</button><b>' + cart.get(p.id) + '</b><button data-acao="mais" data-id="' + p.id + '" aria-label="Aumentar">' + ic('plus') + '</button></div></div>').join('') : '<p class="muted" style="text-align:center;padding:40px 0">Seu carrinho está vazio.</p>') +
+      '</div><footer><div class="tot"><span>Total</span><span>' + real(total()) + '</span></div>' +
+      (f.wpp ? '<button class="btn" data-acao="enviar"' + (itensCart.length ? '' : ' disabled style="opacity:.5"') + '>' + ic('message-circle') + ' Enviar pedido pelo WhatsApp</button>' : '<p class="muted">Informe o WhatsApp da loja para enviar pedidos por aqui.</p>') + '</footer>';
+    icones();
+  }
+  carrinho();
+  const abrir = on => { document.getElementById('drw').classList.toggle('on', on); document.getElementById('ov').classList.toggle('on', on); };
+
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-acao]'); if (!el) return;
+    const a = el.dataset.acao, id = el.dataset.id;
+    if (a === 'add') { cart.set(id, (cart.get(id) || 0) + 1); carrinho(); toast('Adicionado ao pedido'); }
+    else if (a === 'mais') { cart.set(id, cart.get(id) + 1); carrinho(); }
+    else if (a === 'menos') { const v = cart.get(id) - 1; if (v > 0) cart.set(id, v); else cart.delete(id); carrinho(); }
+    else if (a === 'carrinho') abrir(true);
+    else if (a === 'fechar') abrir(false);
+    else if (a === 'tema') { escuro = !escuro; aplicarTema(); temaBtn(); }
+    else if (a === 'filtro') {
+      filtro = el.dataset.cat; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); listar();
+    } else if (a === 'enviar' && cart.size) {
+      const linhas = f.prods.filter(p => cart.get(p.id)).map(p => '• ' + cart.get(p.id) + 'x ' + p.titulo + ' - ' + real(p.preco * cart.get(p.id)));
+      window.open(wa('Olá! Gostaria de fazer um pedido:\n' + linhas.join('\n') + '\n\nTotal: ' + real(total())), '_blank', 'noopener');
+    }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') abrir(false); });
+  document.getElementById('form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!f.wpp) return toast('Informe o WhatsApp da loja para enviar mensagens por aqui.');
+    window.open(wa('Olá! Sou ' + document.getElementById('fn').value + '. ' + document.getElementById('fm').value), '_blank', 'noopener');
+    e.target.reset();
+  });
+})();
+</script>
+</body>
+</html>
