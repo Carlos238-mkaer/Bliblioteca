@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Camaleão</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    sage: { 50: '#f4f7f4', 100: '#e3ebe3', 200: '#c7d7c7', 500: '#7a9e7e', 600: '#5c7f60', 800: '#384d3b' },
+    cream: { 50: '#fdfbf7', 100: '#f7f3eb', 200: '#eee5d8' },
+    warmgray: { 700: '#4a4846', 800: '#2d2b2a' }
+  },
+  fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] }
+} } };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  body { font-family: 'Inter', sans-serif; background: #fdfbf7; color: #4a4846; }
+  .serif-font { font-family: 'Playfair Display', serif; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Entrada: só administradores (a mesma conta do painel) -->
+<div id="portao" class="fixed inset-0 z-40 bg-cream-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl border border-cream-200 p-8 max-w-sm w-full text-center shadow-xl">
+    <div class="text-4xl mb-2">🦎</div>
+    <h1 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Camaleão</h1>
+    <p id="portaoMsg" class="text-xs text-warmgray-700 mb-5">Verificando o seu acesso...</p>
+    <form id="portaoForm" class="space-y-3 hidden">
+      <input type="email" id="pEmail" required autocomplete="username" placeholder="E-mail" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 outline-none focus:ring-2 focus:ring-sage-500/40 text-center">
+      <input type="password" id="pSenha" required autocomplete="current-password" placeholder="Senha" class="w-full text-sm p-2.5 rounded-lg border border-cream-200 outline-none focus:ring-2 focus:ring-sage-500/40 text-center">
+      <button type="submit" id="pBtn" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-sm font-medium py-2.5 rounded-lg transition">Entrar</button>
+    </form>
+    <p id="pErro" class="hidden text-xs text-red-500 mt-3"></p>
+    <a href="admin.html" class="inline-block mt-4 text-xs text-sage-600 hover:underline">← Voltar ao painel</a>
+  </div>
+</div>
+
+<!-- Estúdio -->
+<div id="app" class="hidden">
+  <header class="bg-cream-100 border-b border-cream-200 py-3 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 serif-font text-lg font-bold text-sage-800"><span>🦎</span><span>Camaleão</span></div>
+      <a href="admin.html" class="text-xs text-warmgray-700 hover:text-sage-600 flex items-center gap-1">← Voltar ao painel</a>
+    </div>
+  </header>
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6"><section id="estudio"></section></main>
+</div>
+
+<!-- Modo apresentação: o site em tela cheia para mostrar ao cliente -->
+<div id="apr" class="hidden fixed inset-0 z-50 bg-neutral-800 flex-col">
+  <div id="aprBarra" class="flex items-center justify-between gap-2 flex-wrap bg-white border-b border-cream-200 px-3 py-2 text-xs">
+    <button type="button" id="aprVoltar" class="px-3 py-1.5 rounded-lg border border-cream-200 hover:bg-cream-50 font-medium">← Voltar a editar</button>
+    <div id="aprDev" class="flex gap-1">
+      <button type="button" data-w="390" class="px-3 py-1.5 rounded-full">📱 Celular</button>
+      <button type="button" data-w="768" class="px-3 py-1.5 rounded-full">Tablet</button>
+      <button type="button" data-w="100%" class="px-3 py-1.5 rounded-full">💻 Computador</button>
+    </div>
+    <div class="flex gap-1.5">
+      <button type="button" id="aprCopiar" class="px-3 py-1.5 rounded-lg border border-cream-200 hover:bg-cream-50">Copiar link</button>
+      <button type="button" id="aprOcultar" class="px-3 py-1.5 rounded-lg bg-warmgray-800 text-white hover:bg-sage-600">Ocultar barra</button>
+    </div>
+  </div>
+  <div class="flex-1 min-h-0 flex justify-center overflow-hidden">
+    <iframe id="aprFrame" title="Site da loja" class="bg-white border-0 h-full transition-all" style="width:100%"></iframe>
+  </div>
+  <button type="button" id="aprMostrar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-warmgray-800/90 text-white text-xs px-4 py-2 rounded-full shadow-lg">Mostrar barra</button>
+</div>
+
+<script src="supabase.js"></script>
+<script src="camaleao.js"></script>
+<script>
+// ---------- Acesso: precisa estar logado como administrador ----------
+async function ehAdmin() {
+  try {
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data || !data.session) return false;
+    const r = await supabaseClient.rpc('eh_admin');
+    return !r.error && r.data === true;
+  } catch (e) { return false; }
+}
+function mostrarPortao(msg, comForm) {
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('portao').classList.remove('hidden');
+  document.getElementById('portaoMsg').textContent = msg;
+  document.getElementById('portaoForm').classList.toggle('hidden', !comForm);
+}
+function abrirEstudio() {
+  document.getElementById('portao').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  const box = document.getElementById('estudio');
+  if (!box.dataset.pronto) {
+    box.dataset.pronto = '1';
+    Camaleao.montarEstudio(box, { chamarApiAdmin, lerRespostaApi, resolverUrlCapa, apresentar });
+  }
+}
+document.getElementById('portaoForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const b = document.getElementById('pBtn'), erro = document.getElementById('pErro');
+  erro.classList.add('hidden'); b.disabled = true; b.textContent = 'Entrando...';
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email: document.getElementById('pEmail').value.trim(), password: document.getElementById('pSenha').value });
+    if (error) throw new Error('E-mail ou senha incorretos.');
+    if (!(await ehAdmin())) { await supabaseClient.auth.signOut(); throw new Error('Esta conta não tem acesso de administrador.'); }
+    abrirEstudio();
+  } catch (err) { erro.textContent = err.message; erro.classList.remove('hidden'); }
+  finally { b.disabled = false; b.textContent = 'Entrar'; }
+});
+
+// ---------- Chamadas que o estúdio usa (mesma lógica do painel) ----------
+async function chamarApiAdmin(url, opcoes) {
+  opcoes = opcoes || {};
+  const { data } = await supabaseClient.auth.getSession();
+  const token = data && data.session ? data.session.access_token : '';
+  const resp = await fetch(url, Object.assign({}, opcoes, { headers: Object.assign({}, opcoes.headers || {}, { Authorization: 'Bearer ' + token }) }));
+  if (resp.status === 401) mostrarPortao('Sua sessão expirou. Entre de novo.', true);
+  return resp;
+}
+async function lerRespostaApi(resp) {
+  const texto = await resp.text();
+  let dados = null;
+  try { dados = texto ? JSON.parse(texto) : null; } catch (e) {}
+  if (!resp.ok) {
+    if (dados && dados.erro) throw new Error(dados.erro + (dados.detalhe ? ' — ' + dados.detalhe : '') + ' (HTTP ' + resp.status + ')');
+    throw new Error('O servidor falhou sem explicar o motivo (HTTP ' + resp.status + ').');
+  }
+  if (dados === null) throw new Error('O servidor respondeu em um formato inesperado.');
+  return dados;
+}
+// Envia a foto para o armazenamento do site e devolve o endereço público
+async function resolverUrlCapa(arquivo) {
+  const nome = Date.now() + '-' + arquivo.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-');
+  const { error } = await supabaseClient.storage.from('capas-livros').upload(nome, arquivo, { cacheControl: '3600', upsert: false });
+  if (error) throw error;
+  return supabaseClient.storage.from('capas-livros').getPublicUrl(nome).data.publicUrl;
+}
+
+// ---------- Modo apresentação ----------
+let linkAtual = '';
+const $a = id => document.getElementById(id);
+function aparelho(b) {
+  document.querySelectorAll('#aprDev button').forEach(x => {
+    x.className = 'px-3 py-1.5 rounded-full transition ' + (x === b ? 'bg-sage-500 text-white' : 'bg-white border border-cream-200');
+  });
+  const w = b.dataset.w, f = $a('aprFrame');
+  f.style.width = w.endsWith('%') ? '100%' : w + 'px';
+  f.style.maxWidth = '100%';
+  f.parentElement.style.background = w.endsWith('%') ? '#fff' : '#d4d4d4';
+}
+function apresentar(urlPrevia, urlLink) {
+  linkAtual = urlLink;
+  $a('aprFrame').src = urlPrevia;
+  $a('apr').classList.remove('hidden'); $a('apr').classList.add('flex');
+  $a('aprBarra').classList.remove('hidden'); $a('aprMostrar').classList.add('hidden');
+  document.body.style.overflow = 'hidden';
+  aparelho(document.querySelectorAll('#aprDev button')[window.innerWidth < 700 ? 0 : 2]);
+}
+function sairApresentacao() {
+  $a('apr').classList.add('hidden'); $a('apr').classList.remove('flex');
+  $a('aprFrame').src = 'about:blank';
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('#aprDev button').forEach(b => b.addEventListener('click', () => aparelho(b)));
+$a('aprVoltar').addEventListener('click', sairApresentacao);
+$a('aprOcultar').addEventListener('click', () => { $a('aprBarra').classList.add('hidden'); $a('aprMostrar').classList.remove('hidden'); });
+$a('aprMostrar').addEventListener('click', () => { $a('aprBarra').classList.remove('hidden'); $a('aprMostrar').classList.add('hidden'); });
+$a('aprCopiar').addEventListener('click', () => {
+  if (navigator.clipboard) navigator.clipboard.writeText(linkAtual).then(() => alert('Link copiado!')).catch(() => prompt('Copie o link:', linkAtual));
+  else prompt('Copie o link:', linkAtual);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$a('apr').classList.contains('hidden')) sairApresentacao(); });
+
+// ---------- Início ----------
+(async function () {
+  if (await ehAdmin()) abrirEstudio();
+  else mostrarPortao('Entre com a conta de administrador para usar o Camaleão.', true);
+})();
+</script>
+</body>
+</html>
