@@ -129,4 +129,322 @@
   // A "ficha" da loja: tudo que a demonstração precisa
   function montarFicha(id, nome, cor, extra) {
     const t = tipo(id), x = extra || {}, k = lerCustom(x.d), kp = k && k.prods.length ? k : null;
-   
+    nome = limparTxt(nome, 40) || t.nome;
+    const c = /^#[0-9a-f]{6}$/i.test(cor || '') ? cor.toLowerCase() : t.cor;
+    const cats = kp ? kp.cats : t.cats;
+    const prods = kp ? kp.prods.map(p => [p.e, p.n, p.d, p.v, p.k]) : t.p.map(s => { const a = s.split('|'); return [a[0], a[1], a[2], parseFloat(a[3]), +a[4]]; });
+    const P = k && k.design && k.design.pal;   // paleta da IA só vale se o texto for legível sobre o fundo
+    const claro = P && contraste(P.fundo, P.texto) >= 4.5, escuro = P && contraste(P.fundoEscuro, P.textoEscuro) >= 4.5;
+    return {
+      nome, tipo: t.id, icone: t.icone, cats, frase: t.frase, design: k ? k.design : null,
+      wpp: limparFone(x.wpp), insta: limparInsta(x.insta), end: limparTxt(x.end, 90), hor: limparTxt(x.hor, 70),
+      cfg: {
+        cor_principal: c, cor_fundo: claro ? P.fundo : mix(c, '#ffffff', 0.95), cor_texto: claro ? P.texto : mix(c, '#000000', 0.86),
+        cor_fundo_escuro: escuro ? P.fundoEscuro : mix(c, '#000000', 0.93), cor_texto_escuro: escuro ? P.textoEscuro : '#ece8e3',
+        nome_site: nome, hero_selo: (k && k.selo) || t.selo,
+        hero_titulo: ((k && k.titulo) || t.titulo).replace('{nome}', nome), hero_subtitulo: (k && k.sub) || t.sub
+      },
+      prods: prods.map((a, i) => ({ id: 'demo-' + (i + 1), titulo: a[1], autor: a[2], genero: cats[a[4]], preco: a[3], capa_url: capa(a[0], c, i) }))
+    };
+  }
+
+  // ---------- Fotos: cores dominantes e foto reduzida ----------
+  function abrirImagem(arq) {
+    return new Promise((ok, erro) => {
+      const u = URL.createObjectURL(arq), im = new Image();
+      im.onload = () => { URL.revokeObjectURL(u); ok(im); };
+      im.onerror = () => { URL.revokeObjectURL(u); erro(new Error('Não consegui abrir a imagem "' + arq.name + '".')); };
+      im.src = u;
+    });
+  }
+
+  async function extrairCores(arquivos) {
+    const baldes = {};
+    for (const arq of arquivos) {
+      const im = await abrirImagem(arq);
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x = c.getContext('2d', { willReadFrequently: true });
+      x.drawImage(im, 0, 0, 64, 64);
+      const d = x.getImageData(0, 0, 64, 64).data;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 510;
+        const s = mx === mn ? 0 : (mx - mn) / (255 - Math.abs(mx + mn - 255));
+        if (s < 0.22 || l < 0.15 || l > 0.9) continue;       // ignora cinzas, preto e branco
+        const k = (r >> 5) * 64 + (g >> 5) * 8 + (b >> 5);
+        const o = baldes[k] || (baldes[k] = { r: 0, g: 0, b: 0, n: 0, p: 0 });
+        o.r += r; o.g += g; o.b += b; o.n++; o.p += s * (1 - Math.abs(l - 0.5));
+      }
+    }
+    const achadas = [];
+    Object.values(baldes).sort((a, b) => b.p - a.p).forEach(o => {
+      const cor = [o.r / o.n, o.g / o.n, o.b / o.n];
+      const parecida = achadas.some(a => Math.hypot(a[0] - cor[0], a[1] - cor[1], a[2] - cor[2]) < 70);
+      if (!parecida && achadas.length < 5) achadas.push(cor);
+    });
+    return achadas.map(r2h);
+  }
+
+  async function reduzirFoto(arq, max, qualidade) {
+    const im = await abrirImagem(arq);
+    const e = Math.min(1, (max || 900) / im.width), c = document.createElement('canvas');
+    c.width = Math.round(im.width * e); c.height = Math.round(im.height * e);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', qualidade || 0.72);
+  }
+
+  function montarLink(base, o) {
+    const u = new URL(base, location.href), f = montarFicha(o.tipo, o.nome, o.cor, o);
+    u.search = '';
+    u.searchParams.set('demo', f.tipo); u.searchParams.set('nome', f.nome); u.searchParams.set('cor', f.cfg.cor_principal);
+    if (f.wpp) u.searchParams.set('wpp', f.wpp);
+    if (f.insta) u.searchParams.set('insta', f.insta);
+    if (f.end) u.searchParams.set('end', f.end);
+    if (f.hor) u.searchParams.set('hor', f.hor);
+    if (o.d) u.searchParams.set('d', o.d);
+    if (o.foto) u.searchParams.set('foto', '1');
+    return u.href;
+  }
+
+  // Links antigos (index.html?demo=...) são levados para a página própria da loja (loja.html)
+  const ativo = () => new URLSearchParams(location.search).has('demo') && !/loja\.html$/.test(location.pathname);
+  function iniciarDemo() { location.replace('loja.html' + location.search); }
+
+  // ---------- admin.html: aba "Camaleão" ----------
+  // ---------- Estúdio: formulário + prévia (usado pela página camaleao.html) ----------
+  function montarEstudio(sec, ext) {
+    ext = ext || {};
+    const api = { chamar: ext.chamarApiAdmin || window.chamarApiAdmin, ler: ext.lerRespostaApi || window.lerRespostaApi, upload: ext.resolverUrlCapa || window.resolverUrlCapa };
+    const campo = 'w-full text-xs p-2.5 rounded-lg border border-cream-200 focus:ring-2 focus:ring-sage-500/40 outline-none';
+    const cartao = 'bg-white rounded-2xl border border-cream-200 p-5 shadow-2xs space-y-3';
+    const titulo = (n, t, d) => '<div><h3 class="text-sm font-semibold text-warmgray-800"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sage-500 text-white text-[10px] mr-1.5">' + n + '</span>' + t + '</h3>' + (d ? '<p class="text-[11px] text-gray-400 mt-1 leading-relaxed">' + d + '</p>' : '') + '</div>';
+    sec.innerHTML = `
+      <h2 class="serif-font text-xl font-medium text-warmgray-800 mb-1">Camaleão</h2>
+      <p class="text-xs text-warmgray-700 mb-5 max-w-2xl">Envie fotos da loja e a IA monta um site novo e independente: estrutura, cores, fonte, textos, seções e produtos. Você confere a prévia ao lado e envia o link. Nada disso muda o seu site de verdade.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-6 items-start">
+        <div class="space-y-4 min-w-0">
+          <div class="${cartao}">
+            ${titulo(1, 'A loja')}
+            <input type="text" id="camNome" maxlength="40" placeholder="Nome da loja (ex: Café do Bairro)" class="${campo}">
+            <select id="camTipo" class="${campo}"></select>
+          </div>
+          <div class="${cartao}">
+            ${titulo(2, 'Fotos e IA', 'Fachada, interior, cardápio ou vitrine. Evite fotografar pessoas.')}
+            <input type="file" id="camFotos" accept="image/*" multiple class="w-full text-xs p-2 rounded-lg border border-cream-200 bg-cream-50">
+            <button type="button" id="camIA" class="w-full bg-warmgray-800 hover:bg-sage-600 text-white text-xs font-medium py-2.5 rounded-lg transition shadow-xs">✨ Montar o site com IA</button>
+            <p id="camIAMsg" class="hidden text-[11px] text-gray-400 leading-relaxed"></p>
+            <div id="camCoresBox" class="hidden">
+              <p id="camCoresMsg" class="text-[11px] text-gray-400 mb-2"></p>
+              <div id="camSwatches" class="flex gap-2 flex-wrap"></div>
+            </div>
+            <label class="flex items-center justify-between gap-3 text-xs text-warmgray-700">
+              <span>Cor principal da loja</span>
+              <input type="color" id="camCor" class="w-10 h-8 rounded border border-cream-200 cursor-pointer">
+            </label>
+          </div>
+          <div class="${cartao}">
+            ${titulo(3, 'Contato', 'Opcional. Com o WhatsApp, o pedido do carrinho vai direto para a loja.')}
+            <input type="tel" id="camWpp" placeholder="WhatsApp com DDD (ex: 19 99999-9999)" class="${campo}">
+            <input type="text" id="camInsta" placeholder="Instagram (ex: @cafedobairro)" class="${campo}">
+            <input type="text" id="camEnd" maxlength="90" placeholder="Endereço (ex: Rua das Flores, 120, Campinas)" class="${campo}">
+            <input type="text" id="camHor" maxlength="70" placeholder="Horário (ex: Seg a Sáb, 8h às 19h)" class="${campo}">
+          </div>
+          <div class="${cartao}">
+            ${titulo(4, 'Produtos', 'Um por linha: emoji nome | descrição | preço | categoria. Vazio = produtos de exemplo do tipo de loja.')}
+            <textarea id="camProdutos" rows="6" placeholder="🍕 Pizza Calabresa | Molho da casa | 52,00 | Pizzas" class="${campo} font-mono"></textarea>
+          </div>
+          <button type="button" id="camGerar" class="w-full bg-sage-500 hover:bg-sage-600 text-white text-sm font-medium py-3 rounded-xl transition shadow-xs">Gerar e ver a prévia</button>
+        </div>
+
+        <div class="min-w-0 lg:sticky lg:top-4">
+          <div class="bg-white rounded-2xl border border-cream-200 p-3 shadow-2xs">
+            <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+              <div id="camDevices" class="flex gap-1 text-[11px]">
+                <button type="button" data-w="390" data-h="680" class="px-3 py-1 rounded-full">📱 Celular</button>
+                <button type="button" data-w="768" data-h="720" class="px-3 py-1 rounded-full">Tablet</button>
+                <button type="button" data-w="100%" data-h="720" class="px-3 py-1 rounded-full">💻 Computador</button>
+              </div>
+              <div id="camAcoes" class="hidden flex gap-1.5 flex-wrap">
+                <button type="button" id="camApresentar" class="text-[11px] bg-sage-500 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">▶ Apresentar ao cliente</button>
+                <a id="camAbrir" target="_blank" rel="noopener" class="text-[11px] bg-warmgray-800 hover:bg-sage-600 text-white px-3 py-1.5 rounded-lg transition">Abrir em nova aba</a>
+                <button type="button" id="camCopiar" class="text-[11px] bg-white border border-cream-200 hover:bg-cream-50 text-warmgray-800 px-3 py-1.5 rounded-lg transition">Copiar link</button>
+              </div>
+            </div>
+            <div id="camMoldura" class="mx-auto rounded-xl overflow-hidden border border-cream-200 bg-cream-50 transition-all" style="width:390px;max-width:100%">
+              <p id="camVazio" class="text-xs text-gray-400 text-center px-6 py-24 leading-relaxed">A prévia do site aparece aqui depois de "Gerar e ver a prévia".</p>
+              <iframe id="camPrevia" title="Prévia da demonstração" class="hidden w-full border-0 bg-white" style="height:680px"></iframe>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-3 leading-relaxed">O link copiado funciona em qualquer celular e leva as fotos que foram enviadas ao site. Na demo, o pedido do carrinho e a mensagem de contato abrem o WhatsApp da loja.</p>
+          </div>
+        </div>
+      </div>`;
+
+    const $ = id => sec.querySelector('#' + id);
+    let foto = null, cores = 0, link = '', iaTxt = null, iaDes = null, ultimaPrevia = '';
+    if (ext.apresentar) $('camApresentar').addEventListener('click', () => ext.apresentar(ultimaPrevia, link));
+    else $('camApresentar').remove();
+    const urlsEnviadas = {};   // fotos já enviadas ao site (não repete o envio)
+    $('camTipo').innerHTML = T.map(t => '<option value="' + t.id + '">' + t.emoji + ' ' + t.nome + '</option>').join('');
+    $('camCor').value = T[0].cor;
+    $('camTipo').addEventListener('change', () => { if (!cores) $('camCor').value = tipo($('camTipo').value).cor; });
+
+    // Troca o tamanho da prévia (celular, tablet, computador)
+    function aparelho(botao) {
+      sec.querySelectorAll('#camDevices button').forEach(b => {
+        b.className = 'px-3 py-1 rounded-full transition ' + (b === botao ? 'bg-sage-500 text-white' : 'bg-white border border-cream-200 text-warmgray-700');
+      });
+      $('camMoldura').style.width = botao.dataset.w.endsWith('%') ? '100%' : botao.dataset.w + 'px';
+      $('camPrevia').style.height = botao.dataset.h + 'px';
+    }
+    sec.querySelectorAll('#camDevices button').forEach(b => b.addEventListener('click', () => aparelho(b)));
+    aparelho(sec.querySelector('#camDevices button'));
+
+    $('camFotos').addEventListener('change', async e => {
+      const arqs = [...e.target.files].slice(0, 5);
+      foto = null; cores = 0; $('camCoresBox').classList.add('hidden'); $('camSwatches').innerHTML = '';
+      if (!arqs.length) return;
+      try {
+        const achadas = await extrairCores(arqs);
+        foto = await reduzirFoto(arqs[0]);
+        cores = achadas.length;
+        $('camCoresBox').classList.remove('hidden');
+        $('camCoresMsg').textContent = cores ? 'Cores encontradas nas fotos. Toque para escolher a principal:' : 'Não achei uma cor marcante nas fotos. Escolha a cor abaixo.';
+        achadas.forEach(c => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.title = c; b.style.background = c;
+          b.className = 'w-9 h-9 rounded-full border-2 border-white shadow';
+          b.addEventListener('click', () => { $('camCor').value = c; });
+          $('camSwatches').appendChild(b);
+        });
+        if (cores) $('camCor').value = achadas[0];
+      } catch (err) { alert(err.message || 'Não foi possível ler as fotos.'); }
+    });
+
+    // Monta o parâmetro "d" do link: produtos digitados + design da IA + fotos enviadas
+    function montarD(urls) {
+      const cats = [], p = [], j = {};
+      $('camProdutos').value.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 12).forEach(l => {
+        const c = l.split('|').map(x => x.trim());
+        const m = /^(\p{Extended_Pictographic}[\uFE0F\u200D\p{Extended_Pictographic}]*)?\s*(.*)$/u.exec(c[0] || '');
+        if (!m || !m[2]) return;
+        const preco = parseFloat(String(c[2] || '').replace(/[^\d,.]/g, '').replace(',', '.')) || 0;
+        const cat = limparTxt(c[3], 24) || 'Produtos';
+        if (!cats.includes(cat)) cats.push(cat);
+        p.push([m[1] || '🛍️', m[2], c[1] || '', preco, cats.indexOf(cat)]);
+      });
+      if (p.length) { j.p = p; j.c = cats; }
+      if (iaTxt) { j.s = iaTxt.selo; j.t = iaTxt.titulo; j.u = iaTxt.subtitulo; }
+      if (iaDes) {
+        const d = iaDes, x = d.textos || {};
+        if (d.paleta) j.pl = [d.paleta.principal, d.paleta.fundo, d.paleta.texto, d.paleta.fundoEscuro, d.paleta.textoEscuro];
+        if (d.layout) { j.lh = d.layout.hero; j.lp = d.layout.produtos; }
+        j.f = d.fonte; j.r = d.cantos === 'retos' ? 'r' : 's'; j.h = d.tema === 'escuro' ? 'e' : 'c'; j.o = d.secoes;
+        j.x = { ct: x.catalogo_titulo, cs: x.catalogo_selo, st: x.sobre_titulo, sx: x.sobre_texto, cta: x.cta };
+        j.df = (d.diferenciais || []).map(v => [v.icone, v.titulo, v.texto]);
+      }
+      if (urls && urls.length) j.im = urls;
+      if (!Object.keys(j).length) return '';
+      return btoa(unescape(encodeURIComponent(JSON.stringify(j)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    // Preenche o formulário com o que a IA encontrou (sem apagar o que você já digitou)
+    function aplicarIA(f) {
+      iaTxt = { selo: f.selo, titulo: f.titulo, subtitulo: f.subtitulo };
+      iaDes = f.design || null;
+      if (f.nome && !$('camNome').value.trim()) $('camNome').value = f.nome;
+      if (T.some(t => t.id === f.tipo)) $('camTipo').value = f.tipo;
+      const corIA = (iaDes && iaDes.paleta && iaDes.paleta.principal) || (f.cores && f.cores[0]);
+      if (corIA) $('camCor').value = corIA;
+      if (f.whatsapp && !$('camWpp').value.trim()) $('camWpp').value = f.whatsapp;
+      if (f.instagram && !$('camInsta').value.trim()) $('camInsta').value = '@' + f.instagram;
+      if (f.endereco && !$('camEnd').value.trim()) $('camEnd').value = f.endereco;
+      if (f.horario && !$('camHor').value.trim()) $('camHor').value = f.horario;
+      $('camProdutos').value = (f.produtos || []).map(p => p.emoji + ' ' + p.nome + ' | ' + p.descricao + ' | ' + p.preco.toFixed(2).replace('.', ',') + ' | ' + p.categoria).join('\n');
+      const aviso = [iaDes && iaDes.estilo ? 'Estilo "' + iaDes.estilo + '": montei paleta, fonte, seções e textos.' : 'Montei os textos e os produtos.'];
+      aviso.push(f.lidoDaFoto ? 'Li os produtos e preços das fotos: confira os valores.' : 'Não vi preços nas fotos, então criei produtos de exemplo.');
+      if (!f.nome) aviso.push('Não achei o nome da loja: digite o nome.');
+      aviso.push('Clique em "Gerar e ver a prévia".');
+      $('camIAMsg').textContent = '✨ ' + aviso.join(' ');
+      $('camIAMsg').classList.remove('hidden');
+    }
+
+    $('camIA').addEventListener('click', async () => {
+      const arqs = [...$('camFotos').files].slice(0, 3);
+      if (!arqs.length) { alert('Escolha pelo menos uma foto do lugar (fachada, cardápio ou vitrine).'); return; }
+      const b = $('camIA'), ori = b.textContent;
+      b.disabled = true; b.textContent = 'A IA está olhando as fotos...';
+      try {
+        const fotos = [];
+        for (const a of arqs) fotos.push(await reduzirFoto(a, 1024, 0.7));
+        const resp = await api.chamar('/api/camaleao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fotos }) });
+        const dados = await api.ler(resp);
+        aplicarIA(dados.ficha);
+      } catch (err) { alert(err.message || 'Não foi possível ler as fotos com a IA.'); }
+      finally { b.disabled = false; b.textContent = ori; }
+    });
+
+    // Envia as fotos para o armazenamento do site (assim o link mostra as fotos em qualquer celular)
+    async function enviarFotos(arqs) {
+      const urls = [];
+      for (let i = 0; i < arqs.length; i++) {
+        const a = arqs[i], chave = a.name + a.size + a.lastModified;
+        if (!urlsEnviadas[chave]) {
+          const blob = await (await fetch(await reduzirFoto(a, 1280, 0.75))).blob();
+          urlsEnviadas[chave] = await api.upload(new File([blob], 'camaleao-' + i + '.jpg', { type: 'image/jpeg' }), null);
+        }
+        urls.push(urlsEnviadas[chave]);
+      }
+      return urls;
+    }
+
+    $('camGerar').addEventListener('click', async () => {
+      const nome = $('camNome').value.trim();
+      if (!nome) { alert('Digite o nome da loja.'); $('camNome').focus(); return; }
+      if ($('camWpp').value.trim() && !limparFone($('camWpp').value)) { alert('WhatsApp inválido. Use o DDD e o número, por exemplo: 19 99999-9999.'); $('camWpp').focus(); return; }
+      if ($('camInsta').value.trim() && !limparInsta($('camInsta').value)) { alert('Instagram inválido. Use só o nome de usuário, por exemplo: @cafedobairro.'); $('camInsta').focus(); return; }
+      const b = $('camGerar'), ori = b.textContent;
+      b.disabled = true;
+      let urls = [];
+      const arqs = [...$('camFotos').files].slice(0, 3);
+      if (arqs.length && typeof api.upload === 'function') {
+        b.textContent = 'Enviando as fotos...';
+        try { urls = await enviarFotos(arqs); }
+        catch (err) { alert('Não consegui enviar as fotos ao site, então elas só aparecem neste navegador.\n\n' + (err.message || '')); }
+      }
+      const o = { tipo: $('camTipo').value, nome, cor: $('camCor').value, wpp: $('camWpp').value, insta: $('camInsta').value, end: $('camEnd').value, hor: $('camHor').value, d: montarD(urls) };
+      let comFoto = false;
+      try {
+        if (foto && !urls.length) { localStorage.setItem('camaleao_foto', foto); comFoto = true; } else localStorage.removeItem('camaleao_foto');
+      } catch (err) { /* sem foto local */ }
+      link = montarLink('loja.html', o);
+      const previa = montarLink('loja.html', Object.assign({}, o, { foto: comFoto }));
+      $('camAbrir').href = previa; ultimaPrevia = previa;
+      $('camAcoes').classList.remove('hidden');
+      $('camVazio').classList.add('hidden');
+      $('camPrevia').classList.remove('hidden');
+      $('camPrevia').src = previa;
+      b.disabled = false; b.textContent = ori;
+      if (window.innerWidth < 1024) $('camMoldura').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    $('camCopiar').addEventListener('click', () => {
+      if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => alert('Link copiado!')).catch(() => prompt('Copie o link:', link));
+      else prompt('Copie o link:', link);
+    });
+  }
+
+  // ---------- admin.html: botão que leva ao Camaleão ----------
+  function iniciarAdmin() {
+    const nav = document.querySelector('#adminPanel nav');
+    if (!nav || document.getElementById('btnCamaleao')) return;
+    const a = document.createElement('a');
+    a.id = 'btnCamaleao'; a.href = 'camaleao.html';
+    a.className = 'px-4 py-2 rounded-full font-medium bg-sage-500 hover:bg-sage-600 text-white transition inline-flex items-center gap-1.5 sm:ml-auto';
+    a.innerHTML = '🦎 <span>Camaleão</span> <span aria-hidden="true">→</span>';
+    nav.appendChild(a);
+  }
+
+  const Camaleao = { versao: 7, TIPOS: T, montarEstudio, montarFicha, extrairCores, reduzirFoto, montarLink, ativo, iniciarDemo, fmtFone, limparFone, util: { mix, esc, lumi, contraste }, ficha: null };
+  window.Camaleao = Camaleao;
+  if (document.getElementById('adminPanel')) iniciarAdmin();
+})();
